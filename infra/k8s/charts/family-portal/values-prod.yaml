@@ -1,0 +1,8 @@
+replicaCount: 3
+image:
+  tag: prod
+env: {}
+ingress:
+  host: familyos.com
+  tls: true
+  tlsSecretName: familyos-tls

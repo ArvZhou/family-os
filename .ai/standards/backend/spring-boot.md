@@ -119,12 +119,9 @@ Controller → Service → Repository → PostgreSQL
 
 Add `springdoc-openapi-starter-webmvc-ui` dependency:
 
-```xml
-<dependency>
-    <groupId>org.springdoc</groupId>
-    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-    <version>2.x.x</version>
-</dependency>
+```kotlin
+// build.gradle.kts
+implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 ```
 
 ### Configuration

@@ -55,6 +55,7 @@ project/
 ├── infra/                   # Infrastructure as code
 │   ├── docker/              # Docker Compose + Dockerfiles
 │   ├── k8s/                 # Kubernetes / Helm charts
+│   ├── terraform/           # Cloud infrastructure (IaC)
 │   ├── nginx/               # Reverse proxy config
 │   ├── mqtt/                # MQTT broker config
 │   └── database/            # Database migration scripts (Flyway)

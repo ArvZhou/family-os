@@ -1,0 +1,20 @@
+# =============================================================================
+# Family OS — GraphQL Schema (placeholder)
+# Auto-generated from NestJS at build time.
+# Used by frontend for codegen.
+# =============================================================================
+
+"""
+ISO-8601 date string (YYYY-MM-DD)
+"""
+scalar Date
+
+"""
+ISO-8601 date-time string with timezone
+"""
+scalar DateTime
+
+"""
+Arbitrary JSON value
+"""
+scalar JSON

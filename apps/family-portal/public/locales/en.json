@@ -1,0 +1,19 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "back": "Back"
+  },
+  "dashboard": {
+    "title": "Family Dashboard",
+    "members": "Family Members",
+    "health": "Health Management",
+    "goals": "Goals & Growth",
+    "devices": "Smart Devices",
+    "automation": "Automation Rules",
+    "archive": "Family Archive"
+  }
+}

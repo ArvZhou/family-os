@@ -1,0 +1,14 @@
+spring:
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    clean-disabled: false
+
+logging:
+  level:
+    com.family: DEBUG
+    org.springframework.security: DEBUG

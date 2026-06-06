@@ -52,6 +52,7 @@ family-os/
 ├── infra/
 │   ├── docker/
 │   ├── k8s/
+│   ├── terraform/
 │   ├── nginx/
 │   ├── mqtt/
 │   └── database/
@@ -226,15 +227,33 @@ infra/docker
 
 ### `k8s`
 
-未来 Kubernetes 部署文件。
+Kubernetes Helm Charts 部署文件。
 
 ```text
 infra/k8s
-├── spring
-├── nest
-├── postgres
-├── redis
-└── mqtt
+├── family-portal
+├── family-service
+└── identity-service
+```
+
+### `terraform`
+
+雲端基礎設施即代碼（IaC）。詳見 [Terraform 標準](../standards/infra/terraform.md)。
+
+```text
+infra/terraform
+├── modules
+│   ├── networking
+│   ├── database
+│   ├── kubernetes
+│   ├── redis
+│   ├── storage
+│   ├── dns
+│   └── iam
+└── environments
+    ├── dev
+    ├── staging
+    └── prod
 ```
 
 ### `nginx`

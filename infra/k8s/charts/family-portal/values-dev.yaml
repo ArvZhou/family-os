@@ -1,0 +1,7 @@
+replicaCount: 1
+image:
+  tag: dev
+env: {}
+ingress:
+  host: dev.familyos.dev
+  tls: false

@@ -1,0 +1,13 @@
+{
+  "name": "@family-os/graphql-schema",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/schema.graphql",
+  "scripts": {
+    "codegen": "graphql-codegen"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^5.0.0",
+    "typescript": "^5.7.0"
+  }
+}

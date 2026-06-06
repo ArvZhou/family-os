@@ -150,8 +150,8 @@ pnpm build
 ### Spring Boot
 
 ```bash
-./mvnw clean package -DskipTests
-java -jar apps/api-spring/target/api-spring.jar
+./gradlew bootJar -x test
+java -jar apps/identity-service/build/libs/identity-service.jar
 ```
 
 ### NestJS
@@ -183,6 +183,35 @@ server {
     }
 }
 ```
+
+---
+
+## 雲端基礎設施 (Terraform)
+
+雲端基礎設施通過 Terraform 配置管理。詳見 [Terraform 標準](../standards/infra/terraform.md)。
+
+```bash
+# 初始化
+cd infra/terraform/environments/dev
+terraform init
+
+# 計劃
+terraform plan -var-file="terraform.tfvars"
+
+# 執行
+terraform apply
+
+# 銷毀（僅限 dev！）
+terraform destroy
+```
+
+Terraform 負責管理的資源：
+- VPC、子網、NAT 網關
+- PostgreSQL 數據庫 (RDS)
+- Redis 緩存 (ElastiCache)
+- Kubernetes 集群 (EKS)
+- S3 對象存儲
+- Route 53 DNS 與 ACM SSL 證書
 
 ---
 

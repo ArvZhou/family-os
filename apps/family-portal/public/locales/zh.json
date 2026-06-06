@@ -1,0 +1,19 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "刪除",
+    "loading": "加載中...",
+    "error": "發生錯誤",
+    "back": "返回"
+  },
+  "dashboard": {
+    "title": "家庭儀表板",
+    "members": "家庭成員",
+    "health": "健康管理",
+    "goals": "目標與成長",
+    "devices": "智能設備",
+    "automation": "自動化規則",
+    "archive": "家庭檔案"
+  }
+}

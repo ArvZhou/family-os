@@ -1,0 +1,15 @@
+node_modules/
+.next/
+dist/
+out/
+build/
+target/
+coverage/
+.gradle/
+*.jar
+*.war
+pnpm-lock.yaml
+.turbo/
+src/generated/
+generated/
+schema.graphql

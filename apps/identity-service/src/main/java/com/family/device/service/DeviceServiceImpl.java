@@ -1,0 +1,7 @@
+package com.family.device.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class DeviceServiceImpl implements DeviceService {
+}

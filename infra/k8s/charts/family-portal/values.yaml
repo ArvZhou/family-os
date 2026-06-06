@@ -1,0 +1,27 @@
+replicaCount: 1
+
+image:
+  repository: registry.familyos.dev/family-portal
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  host: localhost
+  tls: false
+  tlsSecretName: ""
+
+resources:
+  limits:
+    memory: 512Mi
+    cpu: 500m
+  requests:
+    memory: 256Mi
+    cpu: 250m
+
+env: {}
+# Environment-specific values override in values-dev.yaml / values-prod.yaml

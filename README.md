@@ -114,14 +114,14 @@ This starts PostgreSQL, Redis, MQTT (EMQX), and MinIO.
 ### 2. Run databases migrations
 
 ```bash
-cd apps/api-spring && ./mvnw flyway:migrate
+cd apps/identity-service && ./gradlew flywayMigrate
 ```
 
 ### 3. Start backend services
 
 ```bash
 # Spring Boot
-cd apps/api-spring && ./mvnw spring-boot:run
+cd apps/identity-service && ./gradlew bootRun
 
 # NestJS (in another terminal)
 cd apps/api-nest && pnpm dev
@@ -155,6 +155,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | [Nuxt.js Standards](.ai/standards/frontend/nuxtjs.md) | vue-apollo, codegen, auto-imports, @nuxtjs/i18n, SSO, Nitro builds |
 | [NestJS Standards](.ai/standards/backend/nestjs.md) | GraphQL resolvers, Swagger, DataLoaders, SSO guard, MQTT |
 | [Spring Boot Standards](.ai/standards/backend/spring-boot.md) | SpringDoc OpenAPI, Spring Security, OAuth2/OIDC, Flyway, testing |
+| [Terraform Standards](.ai/standards/infra/terraform.md) | Cloud infrastructure as code — VPC, DB, K8s, Redis, DNS, SSL |
 
 ### Feature Specs (`features/`)
 

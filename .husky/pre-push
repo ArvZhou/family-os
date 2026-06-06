@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run full test suite
+pnpm test -- --reporter=verbose
+
+# Scan for sensitive data (API keys, PII, passwords)
+# Uses a basic grep for common secret patterns as a first pass
+echo "Scanning for sensitive data..."
+git diff --cached --name-only origin/main..HEAD | grep -E '\.(ts|tsx|js|jsx|json|yaml|yml|env|properties)$' | while read -r file; do
+  if [ -f "$file" ]; then
+    if grep -nE '(api_key|apikey|apiKey|secret|password|token).*=.*["'"'"'][a-zA-Z0-9_-]{20,}' "$file" 2>/dev/null; then
+      echo "ERROR: Potential secret detected in $file. Remove before pushing."
+      exit 1
+    fi
+  fi
+done

@@ -8,6 +8,7 @@ This document defines general deployment standards. Specific build and deploy de
 - [Nuxt.js Standards](./standards/frontend/nuxtjs.md) — Docker + Helm for Nuxt.js
 - [NestJS Standards](./standards/backend/nestjs.md) — NestJS deployment conventions
 - [Spring Boot Standards](./standards/backend/spring-boot.md) — Spring Boot deployment conventions
+- [Terraform Standards](./standards/infra/terraform.md) — Cloud infrastructure as code (IaC)
 
 ---
 

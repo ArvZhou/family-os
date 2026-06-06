@@ -1,0 +1,8 @@
+replicaCount: 2
+image:
+  tag: staging
+env: {}
+ingress:
+  host: staging.familyos.dev
+  tls: true
+  tlsSecretName: familyos-staging-tls
