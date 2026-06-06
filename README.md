@@ -23,35 +23,48 @@ A digital management platform for household scenarios.
 | **Home Automation** | Define rules — if sensor X exceeds threshold → do Y |
 | **AI Assistant** | Health analysis, goal recommendations, family Q&A powered by LLM |
 | **Family Archive** | Store photos, documents, and important events as searchable archives |
+| **SSO** | Single sign-on via OAuth2/OIDC (Keycloak, Auth0, Casdoor, etc.) |
 
 ## Tech Stack
 
 ```
-Next.js (SSR + App Router) — Web UI
-  ↓
-NestJS (Business layer / IoT layer / AI layer)
-  ↓
-Spring Boot (Identity & core data layer)
+Frontend (Next.js / Nuxt.js)
+  ↓ (GraphQL)
+NestJS — GraphQL Gateway + Business Layer + IoT + AI
+  ↓ (REST, internal)
+Spring Boot — Identity & Core Data Layer (SSO / OAuth2)
   ↓
 PostgreSQL
 
 Device → MQTT Broker (EMQX) → NestJS
 ```
 
+### API Layer
+
+- **Frontend → Backend:** GraphQL (NestJS gateway)
+- **Service-to-Service:** REST (documented via Swagger / OpenAPI)
+- **API Docs:** Swagger UI for REST, GraphQL Playground for schema introspection
+- **Authentication:** JWT + SSO (OAuth2 / OIDC reserved)
+
 ### Frontend
 
-- **Framework:** Next.js 15+ (SSR, App Router)
-- **Styling:** Tailwind CSS + shadcn/ui
-- **State:** Zustand (client) + TanStack Query (server)
-- **Hooks:** react-use (preferred)
-- **i18n:** next-intl (zh / en)
-- **Testing:** Vitest + @testing-library/react
+- **Framework:** Next.js 15+ or Nuxt 3+ (see [standards](.ai/standards/frontend/))
+- **API Client:** Apollo Client (React) / vue-apollo (Vue)
+- **Styling:** Tailwind CSS + component library (shadcn/ui or Nuxt UI)
+- **State:** GraphQL client cache (server) + Zustand/Pinia (client)
+- **i18n:** next-intl (Next.js) / @nuxtjs/i18n (Nuxt.js)
+- **Testing:** Vitest
 - **Linting:** ESLint + Prettier (pre-commit via Husky + lint-staged)
-- **Git Hooks:** commit message lint (commitlint) + pre-push test suite + sensitive-data scan
+
+### Backend
+
+- **GraphQL Gateway:** NestJS (`@nestjs/graphql`, code-first)
+- **Core Data:** Spring Boot (JPA, Flyway, SpringDoc OpenAPI)
+- **Database:** PostgreSQL (UUID primary keys, snake_case)
 
 ### Infrastructure
 
-- **Database:** PostgreSQL (UUID primary keys, Flyway migrations)
+- **Database:** PostgreSQL (Flyway migrations)
 - **Cache / Session:** Redis
 - **Messaging:** MQTT (EMQX or Mosquitto)
 - **Object Storage:** MinIO
@@ -130,7 +143,7 @@ Open [http://localhost:3000](http://localhost:3000).
 |----------|-------------|
 | [Architecture](.ai/architecture.md) | System architecture principles and evolution roadmap |
 | [Frontend Standards](.ai/frontend.md) | Framework-agnostic frontend conventions |
-| [API Design Standards](.ai/api.md) | REST API design conventions (versioning, errors, pagination) |
+| [API Design Standards](.ai/api.md) | GraphQL & REST API conventions, Swagger, SSO auth |
 | [Engineering Conventions](.ai/conventions.md) | Coding standards, naming, folder structure |
 | [Deployment Standards](.ai/deployment.md) | Multi-env config, Docker builds, K8s Helm, checklist |
 
@@ -138,16 +151,16 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Document | Description |
 |----------|-------------|
-| [Next.js Standards](.ai/standards/frontend/nextjs.md) | App Router, Server Components, next-intl, Docker, Helm |
-| [Nuxt.js Standards](.ai/standards/frontend/nuxtjs.md) | Auto-imports, Composables, @nuxtjs/i18n, Nitro builds |
-| [NestJS Standards](.ai/standards/backend/nestjs.md) | Module structure, validation, MQTT, event-driven architecture |
-| [Spring Boot Standards](.ai/standards/backend/spring-boot.md) | Package structure, Flyway, Jakarta Validation, testing |
+| [Next.js Standards](.ai/standards/frontend/nextjs.md) | Apollo Client, codegen, App Router, next-intl, SSO, Docker, Helm |
+| [Nuxt.js Standards](.ai/standards/frontend/nuxtjs.md) | vue-apollo, codegen, auto-imports, @nuxtjs/i18n, SSO, Nitro builds |
+| [NestJS Standards](.ai/standards/backend/nestjs.md) | GraphQL resolvers, Swagger, DataLoaders, SSO guard, MQTT |
+| [Spring Boot Standards](.ai/standards/backend/spring-boot.md) | SpringDoc OpenAPI, Spring Security, OAuth2/OIDC, Flyway, testing |
 
 ### Feature Specs (`features/`)
 
 | Document | Description |
 |----------|-------------|
-| [API Endpoints](.ai/features/api.md) | REST API endpoint definitions and request/response formats |
+| [API Endpoints & GraphQL](.ai/features/api.md) | REST endpoints + GraphQL query/mutation definitions |
 | [MQTT Design](.ai/features/mqtt.md) | Topics, message format, authentication |
 | [AI Service](.ai/features/ai-service.md) | LLM integration, prompt design, caching |
 
@@ -157,9 +170,11 @@ Chinese versions available in `.ai/zh/` (`*.zh.md`).
 
 1. **Prefer modular monolith** — One application, multiple modules per service.
 2. **No microservices early on** — Split only when independent deploy/scale/team boundaries demand it.
-3. **No shared databases** — Services communicate via HTTP API, events, or MQTT.
-4. **Frontend never calls Spring directly** — All requests go through NestJS.
-5. **TypeScript strict mode** — No `any` types.
+3. **No shared databases** — Services communicate via GraphQL, REST, events, or MQTT.
+4. **Frontend uses GraphQL** — All frontend requests go through NestJS GraphQL API. No direct REST to Spring.
+5. **REST APIs have Swagger docs** — All REST endpoints generate OpenAPI documentation.
+6. **TypeScript strict mode** — No `any` types.
+7. **SSO ready** — OAuth2/OIDC reserved for single sign-on integration.
 
 ## Contributing
 

@@ -22,10 +22,10 @@ This document defines framework-agnostic frontend engineering standards. For fra
 ### Component Principles
 
 1. **Single responsibility** — one component = one clear purpose.
-2. **Extract early** — if a chunk of markup appears twice or exceeds ~50 lines, extract it to a named component.
-3. **Props interfaces are co-located** — define the `Props` interface in the same file, exported if reused.
-4. **No inline styles** — use utility classes or CSS modules exclusively; component libraries for complex UI.
-5. **Composition over configuration** — pass `children` or render props instead of boolean toggles like `isLarge`.
+2. **Extract early** — if a chunk of markup appears twice or exceeds ~50 lines, extract it.
+3. **Props interfaces are co-located** — define the `Props` interface in the same file.
+4. **No inline styles** — use utility classes or CSS modules exclusively.
+5. **Composition over configuration** — pass `children` or render props instead of boolean toggles.
 
 ```tsx
 // ✅ Good — extracted, typed, single purpose
@@ -62,7 +62,162 @@ export function HealthCard({ title, value, unit, trend, children }: HealthCardPr
 | Utilities | `kebab-case.ts` | `format-date.ts` |
 | Server Actions | `actions.ts` (per feature) | `features/health/actions.ts` |
 | Types | `<name>.types.ts` | `health.types.ts` |
-| API calls | `<name>.api.ts` / `<name>.service.ts` | `health.api.ts` |
+| GraphQL queries | `<name>.queries.ts` / `<name>.graphql` | `member.queries.ts` |
+| GraphQL mutations | `<name>.mutations.ts` / `<name>.graphql` | `member.mutations.ts` |
+
+---
+
+## API Integration — GraphQL
+
+### Principles
+
+- **Frontend communicates with the backend via GraphQL** — this is the primary API channel.
+- Use a **GraphQL client** (Apollo Client, urql, or framework-specific equivalent).
+- **Generate TypeScript types** from the GraphQL schema using `graphql-codegen`.
+- Organize operations by domain (queries, mutations, fragments per feature).
+
+### GraphQL Client Setup
+
+| Framework | Recommended Client |
+|-----------|-------------------|
+| React / Next.js | Apollo Client (`@apollo/client`) or urql |
+| Vue / Nuxt.js | `@vue/apollo-composable` or `nuxt-graphql-client` |
+
+### Code Generation
+
+Use `graphql-codegen` to generate TypeScript types from the backend schema:
+
+```yaml
+# codegen.ts
+schema: 'http://localhost:4000/graphql'   # or path to schema.graphql
+documents: 'src/**/*.graphql'
+generates:
+  src/generated/graphql.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-react-apollo        # or typescript-vue-apollo
+```
+
+### Query Organization
+
+```text
+src/
+├── graphql/                       # GraphQL operations
+│   ├── queries/
+│   │   ├── member.queries.ts      # or member.queries.graphql
+│   │   ├── health.queries.ts
+│   │   ├── goal.queries.ts
+│   │   └── device.queries.ts
+│   ├── mutations/
+│   │   ├── member.mutations.ts
+│   │   ├── health.mutations.ts
+│   │   └── goal.mutations.ts
+│   ├── fragments/
+│   │   ├── member.fragment.ts
+│   │   └── health-record.fragment.ts
+│   └── subscriptions/
+│       └── device.subscriptions.ts
+└── generated/
+    └── graphql.ts                 # Auto-generated types (do not edit)
+```
+
+### Example — React with Apollo Client
+
+```tsx
+// src/graphql/queries/member.queries.ts
+import { gql } from '@apollo/client';
+
+export const GET_MEMBERS = gql`
+  query GetMembers {
+    members {
+      id
+      name
+      birthday
+      relation
+      avatarUrl
+    }
+  }
+`;
+
+export const GET_MEMBER = gql`
+  query GetMember($id: ID!) {
+    member(id: $id) {
+      id
+      name
+      birthday
+      relation
+      avatarUrl
+      healthRecords(first: 10) {
+        edges {
+          node {
+            id
+            type
+            values
+            recordedAt
+          }
+        }
+      }
+    }
+  }
+`;
+```
+
+```tsx
+// Usage in component
+import { useQuery } from '@apollo/client';
+import { GET_MEMBERS } from '@/graphql/queries/member.queries';
+import type { GetMembersQuery } from '@/generated/graphql';
+
+function MemberList() {
+  const { data, loading, error } = useQuery<GetMembersQuery>(GET_MEMBERS);
+
+  if (loading) return <Spinner />;
+  if (error) return <ErrorDisplay error={error} />;
+
+  return (
+    <ul>
+      {data?.members.map(member => (
+        <li key={member.id}>{member.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Example — Vue with Apollo Composable
+
+```ts
+// src/graphql/queries/member.queries.ts
+import { gql } from 'graphql-tag';
+
+export const GET_MEMBERS = gql`
+  query GetMembers {
+    members {
+      id
+      name
+      birthday
+      relation
+    }
+  }
+`;
+```
+
+```vue
+<script setup lang="ts">
+import { useQuery } from '@vue/apollo-composable'
+import { GET_MEMBERS } from '@/graphql/queries/member.queries'
+
+const { result, loading, error } = useQuery(GET_MEMBERS)
+const members = computed(() => result.value?.members ?? [])
+</script>
+```
+
+### Error Handling
+
+- Check `error` from the GraphQL client for network and GraphQL errors.
+- Display user-friendly messages for `extensions.code` values (NOT_FOUND, VALIDATION_ERROR, etc.).
+- Log unexpected errors to monitoring.
 
 ---
 
@@ -72,16 +227,16 @@ export function HealthCard({ title, value, unit, trend, children }: HealthCardPr
 
 | Category | What goes there | Example |
 |----------|-----------------|---------|
-| **Server state** | API responses — members, health records, goals | TanStack Query, useFetch, SWR |
-| **Client state** | UI state — sidebar open, theme, selected tab, auth token | Zustand, Pinia, Redux |
-| **Form state** | Ephemeral form inputs, validation state | Form libraries, native state |
+| **Server state** | GraphQL query results (cached by client) | Apollo cache, urql cache |
+| **Client state** | UI state — sidebar, theme, auth token | Zustand, Pinia |
+| **Form state** | Ephemeral form inputs, validation | Form libraries, native state |
 | **URL state** | Page, filters, sort order | Router params + searchParams |
 
 ### Principles
 
+- **GraphQL client handles server state** — caching, refetching, and invalidation are built-in.
 - **Avoid global client state** unless truly app-wide (theme, auth).
-- **Prefer server state** — fetch once, cache with a data-fetching library, invalidate on mutation.
-- **Form state is local** — keep it in the component; don't put it in a global store.
+- **Form state is local** — keep it in the component.
 - **URL as source of truth** — pagination, filters, and sort order belong in the URL.
 
 ---
@@ -91,19 +246,10 @@ export function HealthCard({ title, value, unit, trend, children }: HealthCardPr
 ### Principles
 
 - Use a **utility-first CSS framework** (e.g., Tailwind CSS) for all styling.
-- Extract repeated patterns to global CSS only when a utility combination is used 5+ times.
-- **Responsive breakpoints**: mobile-first (`sm:` → `md:` → `lg:` → `xl:`).
-- Use a **component library** (e.g., shadcn/ui, Nuxt UI, PrimeVue) for complex interactive components.
-- **Never edit component library source files directly** — override via props or wrapper components.
-
-```tsx
-// ✅ Wrap instead of patching
-import { Button as LibButton } from "@/components/ui/button";
-
-export function Button(props: React.ComponentProps<typeof LibButton>) {
-  return <LibButton {...props} />;
-}
-```
+- Extract repeated patterns to global CSS only when used 5+ times.
+- **Responsive breakpoints**: mobile-first.
+- Use a **component library** for complex interactive components.
+- **Never edit component library source files** — override via props or wrappers.
 
 ---
 
@@ -111,21 +257,40 @@ export function Button(props: React.ComponentProps<typeof LibButton>) {
 
 ### General Standards
 
-- Translation files organized by locale: `{locale}.json` or `{locale}/` directory.
-- **Key naming**: use nested objects by domain: `common.*`, `health.*`, `member.*`, etc.
+- Translation files organized by locale.
+- **Key naming**: nested objects by domain: `common.*`, `health.*`, `member.*`.
 - Keys in `camelCase`, values in the target language.
-- **No string concatenation** for dynamic content — use ICU message format:
+- **No string concatenation** — use ICU message format for dynamic content.
+- Default language: `zh`. Support at minimum: `zh`, `en`.
 
-```json
-{
-  "member": {
-    "ageLabel": "{name}，{age} 岁"
-  }
-}
+---
+
+## Authentication & SSO
+
+### JWT Token Management
+
+- Store access token in memory (preferred) or `httpOnly` cookie.
+- Store refresh token in `httpOnly` cookie or secure storage.
+- Attach `Authorization: Bearer <token>` to all GraphQL requests via client middleware.
+- Auto-refresh on 401 / token expiry.
+
+### SSO Flow (OAuth2/OIDC)
+
+```text
+1. User clicks "Login with SSO"
+2. Redirect to /api/v1/auth/sso/login (NestJS)
+3. NestJS redirects to SSO provider
+4. User authenticates with SSO provider
+5. SSO provider redirects to /api/v1/auth/sso/callback
+6. NestJS exchanges code, issues JWT
+7. Frontend stores JWT, redirects to dashboard
 ```
 
-- Default language: `zh` (Chinese).
-- Support at minimum: `zh`, `en`.
+### Frontend SSO Routes
+
+- `/login` — login page with local + SSO options.
+- `/auth/sso/callback` — handles redirect from SSO provider.
+- `/logout` — clears local session, optionally calls SSO logout.
 
 ---
 
@@ -133,28 +298,29 @@ export function Button(props: React.ComponentProps<typeof LibButton>) {
 
 ### General Standards
 
-- Test files: `*.test.ts` / `*.test.tsx` / `*.spec.ts` alongside the source (co-located) or in `__tests__/`.
+- Test files co-located with source or in `__tests__/`.
 - **Coverage target**: ≥ 80% for domain logic and hooks/composables.
-- Every feature module requires at least:
+- Every feature module requires:
   - **Happy path** test for the primary component.
   - **Edge case** test for empty / error / loading states.
-  - **Hook/Composable tests** for any custom hook with side effects.
-- Use the framework's recommended testing library (e.g., `@testing-library/react`, `@vue/test-utils`).
-- **Test behavior, not implementation** — query by role, text, or label rather than internal state.
-- Mock API calls with a mocking library (e.g., `msw`, `nock`) for integration tests.
+  - **Hook/Composable tests** for custom hooks with side effects.
+- **Test behavior, not implementation.**
+- Mock GraphQL queries in component tests.
 
 ```tsx
-// ✅ Good — tests behavior, not implementation
-import { render, screen } from "@testing-library/react";
-import { HealthCard } from "../HealthCard";
+// ✅ Mock GraphQL query in test
+import { MockedProvider } from '@apollo/client/testing';
 
-describe("HealthCard", () => {
-  it("renders value with unit", () => {
-    render(<HealthCard title="Blood Pressure" value={120} unit="mmHg" />);
-    expect(screen.getByText("120")).toBeInTheDocument();
-    expect(screen.getByText("mmHg")).toBeInTheDocument();
-  });
-});
+const mocks = [{
+  request: { query: GET_MEMBERS },
+  result: { data: { members: [{ id: '1', name: 'Alice' }] } },
+}];
+
+render(
+  <MockedProvider mocks={mocks}>
+    <MemberList />
+  </MockedProvider>
+);
 ```
 
 ---
@@ -166,62 +332,23 @@ describe("HealthCard", () => {
 | Tool | Purpose |
 |------|---------|
 | Husky | Git hook runner |
-| lint-staged | Run linters on staged files only |
-| commitlint | Enforce Conventional Commits format |
-| truffleHog / detect-secrets | Scan for credentials and sensitive data |
+| lint-staged | Run linters on staged files |
+| commitlint | Enforce Conventional Commits |
+| truffleHog / detect-secrets | Scan for credentials |
 
-### Commit Hook (`pre-commit`)
+### Hooks
 
-```bash
-# .husky/pre-commit
-pnpm lint-staged
-```
-
-`lint-staged` configuration:
-
-```json
-{
-  "lint-staged": {
-    "*.{ts,tsx,vue}": ["eslint --fix", "prettier --write"],
-    "*.{json,md,css}": ["prettier --write"]
-  }
-}
-```
-
-### Commit Hook (`commit-msg`)
-
-```bash
-# .husky/commit-msg
-pnpm commitlint --edit "$1"
-```
-
-Enforced format: [Conventional Commits](https://www.conventionalcommits.org/)
-
-```
-feat(web): add health dashboard chart
-fix(web): correct blood pressure unit conversion
-refactor(web): extract HealthCard to shared components
-chore(web): update dependencies
-```
-
-### Push Hook (`pre-push`)
-
-```bash
-# .husky/pre-push
-pnpm vitest run          # Full unit test suite
-pnpm run scan:secrets    # Sensitive data scan
-```
-
-- **All tests must pass** before push is accepted.
-- **Sensitive word scan** checks for: hardcoded API keys / tokens / passwords, PII patterns, private keys or certificates.
+| Hook | Action |
+|------|--------|
+| `pre-commit` | ESLint + Prettier on staged files |
+| `commit-msg` | Conventional Commits validation |
+| `pre-push` | Full test suite + sensitive-data scan |
 
 ---
 
 ## Environment Configuration
 
 ### Multi-Environment Setup
-
-Each environment gets its own config and can point to a different backend:
 
 | Environment | Purpose |
 |-------------|---------|
@@ -231,23 +358,22 @@ Each environment gets its own config and can point to a different backend:
 
 ### Principles
 
-- Use a **schema validation library** (e.g., Zod) to validate environment variables at startup.
-- Never commit real secrets to `.env` files — use `.env.example` as a template.
-- Public-facing env vars must be explicitly prefixed (framework-specific prefix convention).
+- Use a **schema validation library** (e.g., Zod) to validate env vars at startup.
+- Never commit real secrets — use `.env.example`.
+- Public-facing env vars must be explicitly prefixed.
 - Secrets must only be accessed server-side.
 
 ---
 
 ## Feature-First Organization
 
-Organize code by domain/feature, not by technical layer:
-
-```
+```text
 src/features/
 ├── health/
 │   ├── components/      # Feature-specific UI
 │   ├── hooks/           # Feature-specific hooks/composables
-│   ├── api.ts           # Feature-specific API calls
+│   ├── queries.ts       # GraphQL queries for health
+│   ├── mutations.ts     # GraphQL mutations for health
 │   └── types.ts         # Feature-specific types
 ├── member/
 ├── goal/
@@ -256,12 +382,14 @@ src/features/
 └── archive/
 ```
 
-Shared code (used across features) belongs in:
+Shared code in:
 
-```
+```text
 src/components/          # Shared UI components
 src/hooks/               # Shared hooks/composables
 src/lib/                 # Utilities, API client, config
+src/graphql/             # Shared GraphQL operations
+src/generated/           # Auto-generated types (codegen)
 ```
 
 ---

@@ -12,7 +12,7 @@ Always read `AGENTS.md` before generating code.
 
 **Family OS** — A digital management platform for household scenarios: family members, health records, goals, IoT devices, home automation, AI assistant, and family archives.
 
-**Architecture:** Monorepo → React + NestJS + Spring Boot + PostgreSQL
+**Architecture:** Monorepo → Frontend (GraphQL) → NestJS (GraphQL Gateway) → Spring Boot (REST) → PostgreSQL
 
 See `.ai/architecture.md` for full details.
 
@@ -21,14 +21,17 @@ See `.ai/architecture.md` for full details.
 ## Core Principles
 
 1. **Modular monolith first.** Do not introduce microservices.
-2. **NestJS is the application layer.** Frontend must never call Spring directly.
-3. **Spring is the source of truth.** Users, permissions, and core data live in Spring only.
-4. **Feature-first organization.** Group by domain, not by technical layer.
-5. **TypeScript strict mode is mandatory.** No `any`.
-6. **PostgreSQL conventions apply everywhere.** UUID primary keys, snake_case columns.
-7. **MQTT for all device communication.** No direct database writes from devices.
-8. **Keep it simple.** Maintainability > abstraction.
-9. **Frontend conventions apply to web.** Follow [general frontend standards](.ai/frontend.md) and the relevant framework-specific standard ([Next.js](.ai/standards/frontend/nextjs.md) or [Nuxt.js](.ai/standards/frontend/nuxtjs.md)).
+2. **Frontend uses GraphQL.** All frontend requests go through the NestJS GraphQL API. Never call Spring Boot REST directly.
+3. **NestJS is the GraphQL Gateway.** It exposes a unified GraphQL schema and aggregates Spring Boot REST APIs.
+4. **Spring is the source of truth.** Users, permissions, and core data live in Spring only.
+5. **Feature-first organization.** Group by domain, not by technical layer.
+6. **TypeScript strict mode is mandatory.** No `any`.
+7. **PostgreSQL conventions apply everywhere.** UUID primary keys, snake_case columns.
+8. **MQTT for all device communication.** No direct database writes from devices.
+9. **All REST APIs must have Swagger docs.** Use `@nestjs/swagger` (NestJS) or `springdoc-openapi` (Spring Boot).
+10. **All GraphQL types must have descriptions.** Every type, field, and argument needs a docstring.
+11. **SSO is reserved.** Support OAuth2/OIDC for single sign-on. Do not hardcode auth provider.
+12. **Keep it simple.** Maintainability > abstraction.
 
 ---
 
@@ -38,10 +41,11 @@ See `.ai/architecture.md` for full details.
 |------|--------|
 | Frontend: App Router + feature-first | `src/app/[locale]/`, `src/features/health/`, `src/features/member/` |
 | Frontend: components | `src/components/ui/` (shadcn), `src/components/layout/`, `src/components/shared/` |
-| Frontend: stores | Zustand in `src/stores/`; TanStack Query for server state |
+| Frontend: stores | Zustand/Pinia for client state; GraphQL client cache for server state |
+| Frontend: GraphQL | `src/graphql/queries/`, `src/graphql/mutations/`, `src/generated/` (codegen) |
 | Frontend: i18n | `public/locales/{locale}.json`; next-intl via `[locale]` route segment |
 | Frontend: full spec | See `.ai/frontend.md` (general) and `.ai/standards/frontend/` (framework-specific) |
-| NestJS: module structure | `controllers`, `services`, `dto`, `entities`, `events`, `*.module.ts` |
+| NestJS: module structure | `resolvers`, `controllers`, `services`, `dto`, `entities`, `models`, `inputs`, `dataloaders`, `*.module.ts` |
 | Spring: package-by-feature | `member/`, `auth/`, `device/`, `permission/` |
 | Shared types in `packages/shared-types` | Business logic does NOT go here |
 
@@ -52,7 +56,9 @@ See `.ai/architecture.md` for full details.
 ### NestJS
 
 ```
-HealthController      HealthService       CreateHealthDto       HealthEntity
+HealthResolver          HealthController     HealthService
+CreateHealthDto         HealthEntity         CreateHealthInput
+HealthRecordLoader
 ```
 
 ### Spring Boot
@@ -75,9 +81,11 @@ Examples: `MemberCreatedEvent`, `HealthRecordedEvent`, `DeviceOfflineEvent`
 
 ### API
 
-Resource plural nouns: `/api/v1/members`, `/api/v1/health-records`
+REST resource plural nouns: `/api/v1/members`, `/api/v1/health-records`
 
 Never: `/api/getMember`, `/api/createGoal`
+
+GraphQL: `camelCase` queries (`members`, `member(id)`), `camelCase` mutations (`createMember`, `deleteMember`)
 
 ---
 
@@ -88,6 +96,9 @@ Never: `/api/getMember`, `/api/createGoal`
 - All DTOs must have validation decorators (`class-validator`).
 - All services must handle errors — no bare `try/catch` without logging.
 - All public methods must have JSDoc when purpose is non-obvious.
+- All REST controllers must have Swagger decorators (`@ApiTags`, `@ApiOperation`, `@ApiResponse`).
+- All GraphQL types must have `"""description"""` docstrings.
+- GraphQL resolvers must use DataLoaders to prevent N+1 queries.
 
 ---
 
@@ -95,19 +106,23 @@ Never: `/api/getMember`, `/api/createGoal`
 
 ### Must Follow
 
-- [ ] Frontend → NestJS → Spring chain only. No shortcuts.
+- [ ] Frontend → NestJS GraphQL → Spring REST chain only. No shortcuts.
+- [ ] All REST endpoints generate OpenAPI/Swagger documentation.
+- [ ] GraphQL schema exported as `schema.graphql` for frontend codegen.
 - [ ] Database migrations managed by Flyway in Spring Boot.
 - [ ] Device communication goes through MQTT broker (EMQX preferred).
-- [ ] All APIs versioned under `/api/v1/*`.
+- [ ] All REST APIs versioned under `/api/v1/*`.
 - [ ] Object storage uses MinIO for photos, documents, archives.
+- [ ] SSO support reserved via OAuth2/OIDC — do not hardcode auth provider.
 
 ### Must Not Do
 
 - [ ] Introduce microservices before clear need (independent deploy/scale/team boundary).
-- [ ] Share databases across services. Communicate via HTTP, events, or MQTT.
+- [ ] Share databases across services. Communicate via GraphQL, REST, events, or MQTT.
 - [ ] Store secrets in environment files committed to git.
 - [ ] Bypass authentication on any endpoint.
 - [ ] Send PII to LLM without masking names/IDs.
+- [ ] Call Spring Boot REST directly from frontend — always go through NestJS GraphQL.
 
 ---
 

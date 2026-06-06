@@ -11,9 +11,11 @@
 |----------|--------|-------------------|
 | Framework | Nuxt (SSR + Nitro) | 3.x |
 | Language | TypeScript (strict mode) | 5.x |
+| GraphQL Client | `nuxt-graphql-client` or `@vue/apollo-composable` | latest |
+| GraphQL Codegen | `@graphql-codegen/cli` | latest |
 | Styling | Tailwind CSS | 4.x |
 | Component Library | Nuxt UI / PrimeVue | latest |
-| State Management | Pinia (client) + useFetch/useAsyncData (server) | latest |
+| State Management | Pinia (client) + GraphQL cache (server) | latest |
 | Composables | VueUse (preferred) | latest |
 | Testing | Vitest + @vue/test-utils | latest |
 | Linting | ESLint + Prettier | latest |
@@ -36,9 +38,24 @@ apps/web/
 │   ├── layout/                      # Shell, Sidebar, Header, Footer
 │   └── shared/                      # Domain-agnostic reusable components
 ├── composables/                     # Auto-imported composables (hooks)
-│   ├── useApi.ts                    # API client composable
 │   ├── useAuth.ts                   # Auth composable
 │   └── useHealthData.ts
+├── graphql/                         # GraphQL operations
+│   ├── queries/
+│   │   ├── member.queries.ts
+│   │   ├── health.queries.ts
+│   │   ├── goal.queries.ts
+│   │   └── device.queries.ts
+│   ├── mutations/
+│   │   ├── member.mutations.ts
+│   │   ├── health.mutations.ts
+│   │   └── goal.mutations.ts
+│   ├── fragments/
+│   │   └── member.fragment.ts
+│   └── subscriptions/
+│       └── device.subscriptions.ts
+├── generated/                       # Auto-generated GraphQL types (do not edit)
+│   └── graphql.ts
 ├── features/                        # Feature-first domain modules
 │   ├── health/
 │   │   ├── components/              # Health-specific UI
@@ -79,6 +96,7 @@ apps/web/
 │   └── en.json
 ├── utils/                           # Auto-imported utility functions
 ├── types/                           # Shared TypeScript types
+├── codegen.ts                       # GraphQL codegen configuration
 ├── Dockerfile                       # Multi-stage production build
 ├── .env.development                 # Dev environment variables
 ├── .env.staging                     # Staging environment variables
@@ -184,8 +202,9 @@ Custom composables belong in `features/<feature>/composables/` (feature-specific
 
 | Category | Tool | What goes there |
 |----------|------|-----------------|
-| Server state | `useFetch` / `useAsyncData` | API responses — members, health records, goals |
-| Client state | Pinia | UI state — sidebar open, theme, auth token |
+| Server state | GraphQL client cache | GraphQL query results — members, health records, goals |
+| Client state | Pinia | UI state — sidebar open, theme |
+| Auth state | Pinia + cookie | JWT access token, refresh token, user info |
 | Form state | `reactive` / `ref` + vee-validate | Ephemeral form inputs, validation state |
 | URL state | `useRoute()` params + query | Page, filters, sort order |
 
@@ -209,22 +228,55 @@ export const useUIStore = defineStore('ui', () => {
 })
 ```
 
-### Data Fetching
+### Data Fetching (GraphQL)
 
 ```ts
-// ✅ useFetch — auto-deduplication, SSR-friendly
-const { data: members, refresh } = await useFetch('/api/v1/members')
+// ✅ GraphQL query via composable
+import { useQuery } from '@vue/apollo-composable'
+import { GetMembersDocument } from '@/generated/graphql'
 
-// ✅ useAsyncData — for custom async logic
-const { data: healthRecords } = await useAsyncData(
-  'health-records',
-  () => $fetch(`/api/v1/health-records?memberId=${memberId}`)
-)
+const { result, loading, error } = useQuery(GetMembersDocument)
+const members = computed(() => result.value?.members ?? [])
+
+// ✅ GraphQL mutation
+import { useMutation } from '@vue/apollo-composable'
+import { CreateMemberDocument } from '@/generated/graphql'
+
+const { mutate: createMember, loading } = useMutation(CreateMemberDocument)
 ```
 
-- `useFetch` for simple GET requests.
-- `useAsyncData` when you need custom logic before/after the fetch.
-- Both auto-handle SSR hydration and deduplication.
+### Code Generation
+
+```ts
+// codegen.ts
+import type { CodegenConfig } from '@graphql-codegen/cli'
+
+const config: CodegenConfig = {
+  schema: process.env.NUXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql',
+  documents: 'graphql/**/*.ts',
+  generates: {
+    'generated/graphql.ts': {
+      plugins: [
+        'typescript',
+        'typescript-operations',
+        'typescript-vue-apollo',
+      ],
+      config: {
+        withCompositionFn: true,
+      },
+    },
+  },
+}
+
+export default config
+```
+
+Run codegen:
+
+```bash
+pnpm graphql-codegen          # One-time generation
+pnpm graphql-codegen --watch  # Watch mode during development
+```
 
 ---
 
@@ -291,11 +343,11 @@ function switchToEnglish() {
 
 ### Multi-Environment Setup
 
-| Environment | Config File | Backend URL |
+| Environment | Config File | GraphQL URL |
 |-------------|------------|-------------|
-| Development | `.env.development` | `http://localhost:4000/api/v1` |
-| Staging | `.env.staging` | `https://staging-api.familyos.dev/api/v1` |
-| Production | `.env.production` | `https://api.familyos.com/api/v1` |
+| Development | `.env.development` | `http://localhost:4000/graphql` |
+| Staging | `.env.staging` | `https://staging-api.familyos.dev/graphql` |
+| Production | `.env.production` | `https://api.familyos.com/graphql` |
 
 ### Runtime Config
 
@@ -307,9 +359,11 @@ export default defineNuxtConfig({
     apiSecret: '',
     // Public config (exposed to client via useRuntimeConfig)
     public: {
+      graphqlUrl: '',
       apiBaseUrl: '',
       appEnv: 'development',
       mqttBroker: '',
+      ssoEnabled: 'false',
     },
   },
 })
@@ -317,9 +371,11 @@ export default defineNuxtConfig({
 
 ```bash
 # .env.development
+NUXT_PUBLIC_GRAPHQL_URL=http://localhost:4000/graphql
 NUXT_PUBLIC_API_BASE_URL=http://localhost:4000/api/v1
 NUXT_PUBLIC_APP_ENV=development
 NUXT_PUBLIC_MQTT_BROKER=ws://localhost:8083
+NUXT_PUBLIC_SSO_ENABLED=false
 ```
 
 - `runtimeConfig.public.*` — exposed to the client; safe for non-secret config only.
@@ -332,15 +388,85 @@ NUXT_PUBLIC_MQTT_BROKER=ws://localhost:8083
 import { z } from 'zod'
 
 const envSchema = z.object({
+  graphqlUrl: z.string().url(),
   apiBaseUrl: z.string().url(),
   appEnv: z.enum(['development', 'staging', 'production']),
   mqttBroker: z.string().url().optional(),
+  ssoEnabled: z.enum(['true', 'false']).optional(),
 })
 
 export function useEnv() {
   const config = useRuntimeConfig()
   return envSchema.parse(config.public)
 }
+```
+
+---
+
+## Authentication & SSO
+
+### JWT Token Management
+
+- Store access token in Pinia store (memory) or `httpOnly` cookie.
+- Store refresh token in `httpOnly` cookie.
+- Apollo Client / GraphQL client auto-attaches `Authorization: Bearer <token>`.
+- Auto-refresh on 401 / token expiry via error handler.
+
+### SSO Flow
+
+```text
+1. User clicks "Login with SSO" on /login page
+2. Redirect to /api/v1/auth/sso/login (NestJS)
+3. NestJS redirects to SSO provider (Keycloak / Auth0 / ...)
+4. User authenticates with SSO provider
+5. SSO provider redirects to /api/v1/auth/sso/callback
+6. NestJS exchanges code, issues JWT, redirects to frontend
+7. Frontend stores JWT (from cookie or URL param), redirects to dashboard
+```
+
+### SSO Routes
+
+| Route | Description |
+|-------|-------------|
+| `/login` | Login page with local + SSO options |
+| `/auth/sso/callback` | Handles redirect from SSO provider |
+| `/logout` | Clears local session, calls SSO logout |
+
+### Auth Store
+
+```ts
+// stores/auth.store.ts
+import { defineStore } from 'pinia'
+
+export const useAuthStore = defineStore('auth', () => {
+  const user = ref<{ id: string; name: string; email: string } | null>(null)
+  const accessToken = ref<string | null>(null)
+  const isAuthenticated = computed(() => !!accessToken.value)
+
+  function login(token: string, userData: typeof user.value) {
+    accessToken.value = token
+    user.value = userData
+  }
+
+  function logout() {
+    accessToken.value = null
+    user.value = null
+  }
+
+  return { user, accessToken, isAuthenticated, login, logout }
+})
+```
+
+### Auth Middleware
+
+```ts
+// middleware/auth.ts
+export default defineNuxtRouteMiddleware((to) => {
+  const authStore = useAuthStore()
+  if (!authStore.isAuthenticated && to.path !== '/login') {
+    return navigateTo('/login')
+  }
+})
 ```
 
 ---
@@ -407,9 +533,11 @@ image:
   repository: registry.familyos.dev/family-os-web
   tag: dev
 env:
+  NUXT_PUBLIC_GRAPHQL_URL: "https://dev-api.familyos.dev/graphql"
   NUXT_PUBLIC_API_BASE_URL: "https://dev-api.familyos.dev/api/v1"
   NUXT_PUBLIC_APP_ENV: "development"
   NUXT_PUBLIC_MQTT_BROKER: "wss://dev-mqtt.familyos.dev:8083"
+  NUXT_PUBLIC_SSO_ENABLED: "false"
 ingress:
   host: dev.familyos.dev
   tls: false
@@ -422,8 +550,10 @@ image:
   repository: registry.familyos.com/family-os-web
   tag: prod
 env:
+  NUXT_PUBLIC_GRAPHQL_URL: "https://api.familyos.com/graphql"
   NUXT_PUBLIC_API_BASE_URL: "https://api.familyos.com/api/v1"
   NUXT_PUBLIC_APP_ENV: "production"
+  NUXT_PUBLIC_SSO_ENABLED: "true"
 ingress:
   host: familyos.com
   tls: true

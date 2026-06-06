@@ -5,6 +5,7 @@
 This document defines general engineering conventions for all contributors (human + AI agents). Framework-specific conventions are in separate files:
 
 - [Frontend Standards](./frontend.md) — General frontend conventions
+- [API Design Standards](./api.md) — GraphQL & REST API conventions
 - [NestJS Standards](./standards/backend/nestjs.md) — NestJS-specific conventions
 - [Spring Boot Standards](./standards/backend/spring-boot.md) — Spring Boot-specific conventions
 
@@ -21,7 +22,8 @@ Runnable applications. Each app is independently deployable.
 Reusable shared code. Packages must not contain business logic.
 
 ```text
-shared-types     # Unified type definitions
+shared-types     # Unified TypeScript type definitions
+graphql-schema   # Shared GraphQL schema & codegen types
 ui               # Shared UI components
 utils            # Shared utility functions
 config           # ESLint, Prettier, TS, env configs
@@ -31,54 +33,93 @@ config           # ESLint, Prettier, TS, env configs
 
 ## API Access
 
-Frontend should never call the data layer directly. All requests go through the application layer.
+Frontend communicates with the backend via **GraphQL**. Internal service-to-service communication uses **REST**.
 
 ```text
 Frontend
+  ↓ (GraphQL)
+NestJS — GraphQL Gateway + Application Layer
+  ↓ (REST, internal)
+Spring Boot — Identity & Core Data Layer
   ↓
-Application Layer (BFF / API Gateway)
-  ↓
-Domain Services
-  ↓
-Database
+PostgreSQL
 ```
 
-The application layer handles:
-- Request routing and aggregation
-- IoT device communication
-- AI/LLM integration
-- Cross-cutting concerns (notifications, automation)
+- **Frontend never calls Spring Boot directly** — all requests go through the NestJS GraphQL API.
+- **NestJS aggregates** Spring Boot REST endpoints and exposes them as a unified GraphQL schema.
+- **REST endpoints** are for internal service communication and external integrations.
 
 ---
 
 ## Database Conventions
 
-### General Rules
+### PostgreSQL
 
-- Use a relational database (e.g., PostgreSQL) as the primary data store.
+**PostgreSQL** is the database for all services.
+
 - **Primary keys**: UUID — avoid auto-increment IDs for distributed compatibility.
-- **Table names**: `snake_case` or `kebab-case` (e.g., `health_record`, `family_member`).
+- **Table names**: `snake_case` (e.g., `health_record`, `family_member`).
 - **Column names**: `snake_case` (e.g., `created_at`, `member_id`).
-- **Migrations**: use a migration tool (e.g., Flyway, Prisma Migrate, Knex migrations).
-- The data layer service is the **single source of truth** for identity, permissions, and core data.
+- **Migrations**: Flyway for Spring Boot; Prisma Migrate or Knex for NestJS.
+- **Indexes**: add indexes for frequently queried columns, foreign keys, and unique constraints.
+- **Timestamps**: every table must have `created_at` and `updated_at` columns (auto-managed).
+- **Soft delete**: use `deleted_at` timestamp instead of hard deletes for important data.
 
 ### Data Ownership
 
 Each service owns its data. Avoid direct modification from other services:
 
-- **Identity service** owns: users, permissions, device registry.
-- **Application layer** communicates with identity service via HTTP API or events — never direct DB writes.
+- **Spring Boot** owns: users, permissions, device registry, member base data.
+- **NestJS** owns: health records, goals, automation rules, AI analysis cache, IoT state.
+- NestJS communicates with Spring Boot via REST API — never direct DB writes.
 
 ---
 
 ## API Conventions
 
-- **Style**: REST with resource-oriented URLs.
-- **Versioning**: all APIs versioned under `/api/v1/*`.
-- **Resource naming**: plural nouns — `/api/v1/members`, `/api/v1/health-records`.
-- Never: `/api/getMember`, `/api/createGoal`.
+### GraphQL (Frontend API)
 
-See [API Design Standards](./api.md) for full conventions.
+- **Schema-first** approach: define the GraphQL schema before implementing resolvers.
+- Every type, field, and argument must have a description docstring.
+- Use Relay-style **connection pagination** for list queries.
+- Use **enums** for fixed value sets instead of strings.
+- Resolve N+1 queries with **DataLoaders**.
+- Export `schema.graphql` for frontend code generation.
+
+See [API Design Standards](./api.md) for full GraphQL conventions.
+
+### REST (Internal API)
+
+- **Resource-oriented URLs** with plural nouns.
+- **Versioned**: all APIs under `/api/v1/*`.
+- **Swagger/OpenAPI**: all REST endpoints must generate OpenAPI 3.0 documentation.
+  - NestJS: `@nestjs/swagger` decorators → Swagger UI at `/api/docs`
+  - Spring Boot: `springdoc-openapi` → Swagger UI at `/swagger-ui.html`
+
+See [API Design Standards](./api.md) for full REST conventions.
+
+---
+
+## Authentication & SSO
+
+### JWT
+
+- Use JWT Bearer tokens for API authentication.
+- Access tokens: short-lived (15–30 minutes).
+- Refresh tokens: longer-lived (7–30 days), stored securely.
+- Include `Authorization: Bearer <token>` header in all authenticated requests.
+
+### SSO — OAuth2 / OIDC (Reserved)
+
+- Support **OAuth2 / OpenID Connect** for single sign-on.
+- SSO provider is **pluggable** — any OIDC-compliant provider (Keycloak, Auth0, Casdoor, Azure AD, etc.).
+- When SSO is enabled:
+  - Login redirects to SSO provider.
+  - Callback exchanges authorization code for tokens.
+  - Internal JWT is issued based on SSO identity.
+- When SSO is disabled:
+  - Fall back to local username/password authentication.
+- SSO configuration via environment variables (see [API Design Standards](./api.md)).
 
 ---
 
@@ -102,16 +143,16 @@ GoalCompletedEvent
 
 ## Infrastructure Conventions
 
-- **Local development**: Docker Compose for infrastructure services.
-- **Staging / Production**: Kubernetes + Helm (or equivalent orchestrator).
+- **Local development**: Docker Compose for PostgreSQL, Redis, MQTT, MinIO.
+- **Staging / Production**: Kubernetes + Helm.
 - Multi-stage Docker builds for all services.
 - See [Deployment Guide](./deployment.md) for details.
 
 ### Service Conventions
 
-- **MQTT broker** for IoT device communication (e.g., EMQX, Mosquitto).
-- **Object storage** for photos, documents, archives (e.g., MinIO, S3).
-- **Cache / session store** for performance (e.g., Redis).
+- **MQTT broker** for IoT device communication (EMQX preferred, Mosquitto alternative).
+- **Redis** for caching, sessions, rate limiting.
+- **MinIO / S3** for object storage (photos, documents, archives).
 
 ---
 
@@ -130,7 +171,6 @@ Avoid in production code:
 ```text
 console.log
 System.out.println
-System.err.println
 ```
 
 ---
@@ -146,6 +186,7 @@ System.err.println
 ### Focus Areas
 
 - Domain logic (health calculations, automation rules).
+- GraphQL resolvers (query correctness, mutation side effects).
 - Data transformations.
 - Error handling paths.
 
@@ -153,6 +194,7 @@ System.err.println
 
 - Pre-push hook runs full test suite — tests must pass before push is accepted.
 - New feature code requires at least unit tests covering happy path and edge cases.
+- GraphQL integration tests should verify query responses against the schema.
 
 ---
 
@@ -163,10 +205,12 @@ When generating code:
 1. Follow feature-first organization.
 2. Prefer modular monolith design.
 3. Do not introduce microservices.
-4. Do not bypass the application layer from frontend.
-5. Do not bypass the data layer service for identity data.
+4. Do not bypass the NestJS GraphQL layer from frontend.
+5. Do not bypass Spring Boot for identity data.
 6. Use TypeScript strict mode.
-7. Follow database conventions (UUID, snake_case).
-8. Prefer maintainability over abstraction.
-9. Keep architecture simple.
-10. Optimize for long-term extensibility.
+7. Follow PostgreSQL conventions (UUID, snake_case).
+8. All REST endpoints must have Swagger decorators.
+9. All GraphQL types must have description docstrings.
+10. Prefer maintainability over abstraction.
+11. Keep architecture simple.
+12. Optimize for long-term extensibility.
