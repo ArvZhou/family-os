@@ -1,4 +1,8 @@
-# Family OS MQTT Design Guide
+# MQTT Design Guide
+
+> Feature spec for IoT device communication via MQTT.
+> For general engineering conventions, see [../conventions.md](../conventions.md).
+> For NestJS MQTT integration, see [NestJS Standards](../standards/backend/nestjs.md#mqtt-integration).
 
 ## Overview
 

@@ -1,101 +1,122 @@
-# Family OS Deployment Guide
+# Deployment Standards
+
+## Purpose
+
+This document defines general deployment standards. Specific build and deploy details for each framework are in their respective standards files:
+
+- [Next.js Standards](./standards/frontend/nextjs.md) — Docker + Helm for Next.js
+- [Nuxt.js Standards](./standards/frontend/nuxtjs.md) — Docker + Helm for Nuxt.js
+- [NestJS Standards](./standards/backend/nestjs.md) — NestJS deployment conventions
+- [Spring Boot Standards](./standards/backend/spring-boot.md) — Spring Boot deployment conventions
+
+---
+
+## Environment Strategy
+
+Support three deployment environments:
+
+| Environment | Purpose | Characteristics |
+|-------------|---------|-----------------|
+| **Development** | Local dev, feature branches | Local infrastructure, hot reload |
+| **Staging** | Pre-release QA, integration testing | Production-like config, test data |
+| **Production** | Live user-facing environment | Real data, high availability |
+
+Each service reads its environment config from env-specific files. Never hardcode environment-specific values in source code.
+
+---
 
 ## Local Development
 
-Use Docker Compose for local development environment.
-
-```bash
-docker compose up -d postgres redis mqtt minio
-cd apps/web && pnpm install && pnpm dev
-```
+Use Docker Compose (or equivalent) to run infrastructure services locally.
 
 ### Prerequisites
 
 - Docker & Docker Compose
-- Node.js 18+
-- Java 21+ (for Spring Boot)
-- pnpm 9+
+- Language-specific toolchains (Node.js, JDK, etc.)
+- Package manager (pnpm, npm, yarn)
+
+### Workflow
+
+```bash
+# Start infrastructure
+docker compose -f infra/docker/docker-compose.yml up -d
+
+# Run database migrations
+# (framework-specific migration command)
+
+# Start application services
+# (framework-specific dev commands)
+```
 
 ---
 
 ## Environment Variables
 
-### .env.local
+### Template (`.env.example`)
 
 ```bash
 # Database
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=family_os
-DB_USER=family_user
+DB_NAME=<project_name>
+DB_USER=<user>
 DB_PASSWORD=<secret>
 
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
+# Cache
+CACHE_HOST=localhost
+CACHE_PORT=6379
 
-# MQTT
-MQTT_BROKER_URL=mqtt://localhost:1883
+# Message Broker
+BROKER_URL=mqtt://localhost:1883
 
-# MinIO
-MINIO_ENDPOINT=localhost:9000
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin
+# Object Storage
+STORAGE_ENDPOINT=localhost:9000
+STORAGE_ACCESS_KEY=<key>
+STORAGE_SECRET_KEY=<secret>
 
-# JWT
+# Authentication
 JWT_SECRET=<generate strong secret>
 JWT_REFRESH_SECRET=<generate strong refresh secret>
 
 # AI / LLM
 LLM_API_KEY=<provider key>
-LLM_MODEL=gpt-4o
+LLM_MODEL=<model name>
 LLM_BASE_URL=<optional proxy>
 ```
 
+### Rules
+
+- Never commit real secrets to `.env` files — use `.env.example` as a template.
+- Each environment has its own `.env.<environment>` file.
+- Use a schema validation library to validate environment variables at startup.
+
 ---
 
-## Services
+## Infrastructure Services
 
-### PostgreSQL
+### Database
 
-Port: `5432`
+Port: standard (e.g., `5432` for PostgreSQL)
 
-```yaml
-POSTGRES_DB=family_os
-POSTGRES_USER=family_user
-POSTGRES_PASSWORD=<secret>
-```
+Used for persistent data storage. Each service may have its own schema or database.
 
-### Redis
+### Cache
 
-Port: `6379`
+Port: standard (e.g., `6379` for Redis)
 
 Used for caching, session storage, rate limiting.
 
-### MQTT Broker (EMQX)
+### Message Broker
 
-Port: `1883` (MQTT), `18083` (Dashboard)
+Port: standard (e.g., `1883` for MQTT, `5672` for AMQP)
 
-Topic structure:
+Used for IoT device communication and event-driven architecture.
 
-| Topic | Description |
-|-------|-------------|
-| `device/+/status` | Device status updates |
-| `device/+/telemetry` | Device telemetry data |
-| `device/+/command` | Commands sent to devices |
-| `automation/+/trigger` | Automation trigger events |
+### Object Storage
 
-### MinIO
+Port: standard (e.g., `9000` for MinIO / S3)
 
-Port: `9000` (API), `9001` (Console)
-
-Buckets:
-
-| Bucket | Purpose |
-|--------|---------|
-| `family-photos` | Photo archives |
-| `family-docs` | Document storage |
-| `device-data` | Temporary device cache |
+Used for photos, documents, archives.
 
 ---
 
@@ -108,8 +129,8 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: family_os
-      POSTGRES_USER: family_user
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -132,38 +153,103 @@ services:
       - "9001:9001"
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY}
 ```
 
 ---
 
-## Build
+## Docker Builds
 
-### Frontend
+All services use **multi-stage Docker builds** for minimal production images.
 
-```bash
-pnpm install
-pnpm build
+### General Pattern
+
+```dockerfile
+# Stage 1: Install dependencies
+FROM <base-image> AS deps
+WORKDIR /app
+COPY <dependency-files> ./
+RUN <install-command>
+
+# Stage 2: Build
+FROM <base-image> AS builder
+WORKDIR /app
+COPY --from=deps /app/<deps-dir> ./<deps-dir>
+COPY . .
+RUN <build-command>
+
+# Stage 3: Production runtime
+FROM <minimal-base-image> AS runner
+WORKDIR /app
+ENV <ENV>=production
+COPY --from=builder /app/<build-output> ./<build-output>
+EXPOSE <port>
+CMD ["<start-command>"]
 ```
 
-### Spring Boot
+### Principles
 
-```bash
-./mvnw clean package -DskipTests
-java -jar apps/api-spring/target/api-spring.jar
-```
+- **Separate dependency installation** from build (cached layer).
+- **Minimal production image** — only include build output, not source or dev dependencies.
+- **Tag per environment**: `<project>-<service>:dev`, `<project>-<service>:staging`, `<project>-<service>:prod`.
 
-### NestJS
-
-```bash
-pnpm build:api-nest
-node apps/api-nest/dist/main.js
-```
+Framework-specific Dockerfiles are documented in their respective standards files.
 
 ---
 
-## Nginx Configuration
+## Kubernetes Deployment (Helm)
+
+### Chart Structure
+
+```
+infra/k8s/charts/
+├── <frontend>/
+│   ├── Chart.yaml
+│   ├── values.yaml              # Default values
+│   ├── values-dev.yaml          # Dev overrides
+│   ├── values-staging.yaml      # Staging overrides
+│   ├── values-prod.yaml         # Production overrides
+│   └── templates/
+│       ├── deployment.yaml
+│       ├── service.yaml
+│       ├── configmap.yaml
+│       ├── ingress.yaml
+│       └── _helpers.tpl
+├── <backend-gateway>/
+│   └── ...
+└── <backend-core>/
+    └── ...
+```
+
+### Per-Environment Values
+
+Each environment has its own values file overriding:
+
+- **Replica count**: 1 for dev, 3+ for production.
+- **Image tag**: per-environment tag.
+- **Environment variables**: per-environment API URLs and config.
+- **Ingress**: per-environment host and TLS settings.
+
+### Deploy
+
+```bash
+# Dev
+helm upgrade --install <service> ./infra/k8s/charts/<service> \
+  -f ./infra/k8s/charts/<service>/values-dev.yaml
+
+# Production
+helm upgrade --install <service> ./infra/k8s/charts/<service> \
+  -f ./infra/k8s/charts/<service>/values-prod.yaml
+```
+
+Build tools (Docker CLI, kaniko, buildpacks, CI pipeline) are intentionally left open — the Helm chart only references the final image `registry/repo:tag`.
+
+---
+
+## Reverse Proxy
+
+Use a reverse proxy (e.g., Nginx, Traefik, Caddy) to route requests:
 
 ```nginx
 server {
@@ -171,15 +257,15 @@ server {
     server_name example.com;
 
     location /api/ {
-        proxy_pass http://nestjs:3000;
+        proxy_pass http://<backend-gateway>:<port>;
     }
 
     location /auth/ {
-        proxy_pass http://springboot:8080;
+        proxy_pass http://<backend-core>:<port>;
     }
 
     location / {
-        proxy_pass http://web:3000;
+        proxy_pass http://<frontend>:<port>;
     }
 }
 ```
@@ -188,13 +274,15 @@ server {
 
 ## Production Checklist
 
-- [ ] Set `NODE_ENV=production`
-- [ ] Set strong secrets for JWT
-- [ ] Enable HTTPS
-- [ ] Configure log aggregation (ELK/Loki)
-- [ ] Set up monitoring (Prometheus + Grafana)
-- [ ] Configure database backups
-- [ ] Configure MinIO backups
+- [ ] Set production environment mode
+- [ ] Set strong secrets for authentication
+- [ ] Enable HTTPS / TLS
+- [ ] Configure log aggregation (ELK / Loki / CloudWatch)
+- [ ] Set up monitoring (Prometheus + Grafana / Datadog)
+- [ ] Configure database backups and retention
+- [ ] Configure object storage backups
 - [ ] Set up SSL certificates
 - [ ] Configure firewall rules
 - [ ] Test recovery procedures
+- [ ] Configure rate limiting
+- [ ] Set up alerting for critical metrics

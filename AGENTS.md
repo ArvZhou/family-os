@@ -28,6 +28,7 @@ See `.ai/architecture.md` for full details.
 6. **PostgreSQL conventions apply everywhere.** UUID primary keys, snake_case columns.
 7. **MQTT for all device communication.** No direct database writes from devices.
 8. **Keep it simple.** Maintainability > abstraction.
+9. **Frontend conventions apply to web.** Follow [general frontend standards](.ai/frontend.md) and the relevant framework-specific standard ([Next.js](.ai/standards/frontend/nextjs.md) or [Nuxt.js](.ai/standards/frontend/nuxtjs.md)).
 
 ---
 
@@ -35,7 +36,11 @@ See `.ai/architecture.md` for full details.
 
 | Rule | Detail |
 |------|--------|
-| Frontend: feature-first | `features/health`, `features/member`, etc. |
+| Frontend: App Router + feature-first | `src/app/[locale]/`, `src/features/health/`, `src/features/member/` |
+| Frontend: components | `src/components/ui/` (shadcn), `src/components/layout/`, `src/components/shared/` |
+| Frontend: stores | Zustand in `src/stores/`; TanStack Query for server state |
+| Frontend: i18n | `public/locales/{locale}.json`; next-intl via `[locale]` route segment |
+| Frontend: full spec | See `.ai/frontend.md` (general) and `.ai/standards/frontend/` (framework-specific) |
 | NestJS: module structure | `controllers`, `services`, `dto`, `entities`, `events`, `*.module.ts` |
 | Spring: package-by-feature | `member/`, `auth/`, `device/`, `permission/` |
 | Shared types in `packages/shared-types` | Business logic does NOT go here |
@@ -109,8 +114,18 @@ Never: `/api/getMember`, `/api/createGoal`
 ## Testing Rules
 
 - Priority: Unit Test → Integration Test → E2E Test.
+- Frontend: **Vitest** + @testing-library/react. Backend: Jest (NestJS) / JUnit + Mockito (Spring).
 - Focus areas: domain logic, automation rules, health calculations.
 - New feature code requires at least unit tests covering happy path and edge cases.
+- All tests must pass in pre-push hook before push is accepted.
+
+## Git Hooks (Husky)
+
+| Hook | Action |
+|------|--------|
+| `pre-commit` | ESLint + Prettier on staged files (via lint-staged) |
+| `commit-msg` | Enforce Conventional Commits format (via commitlint) |
+| `pre-push` | Full Vitest suite + sensitive-data scan (API keys, PII, passwords) |
 
 ---
 

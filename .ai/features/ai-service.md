@@ -1,4 +1,8 @@
-# Family OS AI Service Design
+# AI Service Design
+
+> Feature spec for AI/LLM integration.
+> For general API standards, see [../api.md](../api.md).
+> For NestJS module conventions, see [NestJS Standards](../standards/backend/nestjs.md).
 
 ## Overview
 

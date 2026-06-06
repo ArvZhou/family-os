@@ -1,350 +1,90 @@
-# Family OS Engineering Conventions
+# Engineering Conventions
 
 ## Purpose
 
-This document defines the engineering conventions for all AI agents and contributors working on Family OS.
-10. Optimize for long-term extensibility.
-## apps
+This document defines general engineering conventions for all contributors (human + AI agents). Framework-specific conventions are in separate files:
 
-Runnable applications.
-
-```text
-apps/web
-apps/api-spring
-apps/api-nest
-```
+- [Frontend Standards](./frontend.md) — General frontend conventions
+- [NestJS Standards](./standards/backend/nestjs.md) — NestJS-specific conventions
+- [Spring Boot Standards](./standards/backend/spring-boot.md) — Spring Boot-specific conventions
 
 ---
 
-## packages
+## Monorepo Rules
 
-Reusable shared code.
+### apps
 
-```text
-shared-types
-ui
-utils
-config
-```
+Runnable applications. Each app is independently deployable.
 
-Packages must not contain business logic.
+### packages
 
----
-
-# Frontend Conventions
-
-Framework:
+Reusable shared code. Packages must not contain business logic.
 
 ```text
-React
-TypeScript
+shared-types     # Unified type definitions
+ui               # Shared UI components
+utils            # Shared utility functions
+config           # ESLint, Prettier, TS, env configs
 ```
-
-Recommended:
-
-```text
-src/
-├── features/
-├── components/
-├── hooks/
-├── services/
-├── routes/
-├── layouts/
-└── pages/
-```
-
----
-
-## Feature First
-
-Prefer:
-
-```text
-features/health
-features/device
-features/member
-```
-
-instead of:
-
-```text
-components/health
-components/device
-```
-
----
-
-## State Management
-
-Preferred order:
-
-1. React Query
-2. Zustand
-
-Avoid Redux unless complexity requires it.
 
 ---
 
 ## API Access
 
-Never call Spring Boot directly from UI.
-
-Preferred:
+Frontend should never call the data layer directly. All requests go through the application layer.
 
 ```text
-React
-↓
-NestJS
-↓
-Spring
+Frontend
+  ↓
+Application Layer (BFF / API Gateway)
+  ↓
+Domain Services
+  ↓
+Database
 ```
 
-NestJS acts as application layer.
+The application layer handles:
+- Request routing and aggregation
+- IoT device communication
+- AI/LLM integration
+- Cross-cutting concerns (notifications, automation)
 
 ---
 
-# NestJS Conventions
+## Database Conventions
 
-Role:
+### General Rules
 
-```text
-Business Layer
-IoT Layer
-AI Layer
-```
+- Use a relational database (e.g., PostgreSQL) as the primary data store.
+- **Primary keys**: UUID — avoid auto-increment IDs for distributed compatibility.
+- **Table names**: `snake_case` or `kebab-case` (e.g., `health_record`, `family_member`).
+- **Column names**: `snake_case` (e.g., `created_at`, `member_id`).
+- **Migrations**: use a migration tool (e.g., Flyway, Prisma Migrate, Knex migrations).
+- The data layer service is the **single source of truth** for identity, permissions, and core data.
 
-NestJS is not the source of truth.
+### Data Ownership
 
----
+Each service owns its data. Avoid direct modification from other services:
 
-## Module Structure
-
-Each feature:
-
-```text
-health/
-├── controllers
-├── services
-├── dto
-├── entities
-├── events
-└── health.module.ts
-```
+- **Identity service** owns: users, permissions, device registry.
+- **Application layer** communicates with identity service via HTTP API or events — never direct DB writes.
 
 ---
 
-## Naming
+## API Conventions
 
-```text
-HealthController
-HealthService
-CreateHealthDto
-HealthEntity
-```
+- **Style**: REST with resource-oriented URLs.
+- **Versioning**: all APIs versioned under `/api/v1/*`.
+- **Resource naming**: plural nouns — `/api/v1/members`, `/api/v1/health-records`.
+- Never: `/api/getMember`, `/api/createGoal`.
 
----
-
-## Event Driven
-
-Prefer events for:
-
-* Device status updates
-* Notifications
-* Automation triggers
-
-Examples:
-
-```text
-HealthRecordedEvent
-DeviceOnlineEvent
-GoalCompletedEvent
-```
+See [API Design Standards](./api.md) for full conventions.
 
 ---
 
-## MQTT
+## Event Naming
 
-All device communication should go through MQTT.
-
-Avoid direct device-to-database communication.
-
----
-
-# Spring Boot Conventions
-
-Role:
-
-```text
-Identity
-Permissions
-Core Data
-```
-
-Spring is the source of truth.
-
----
-
-## Package Structure
-
-Feature based.
-
-```text
-member
-auth
-device
-permission
-```
-
-Avoid technical-layer-first packages.
-
----
-
-## Layer Structure
-
-```text
-controller
-service
-repository
-entity
-dto
-```
-
-inside each feature.
-
-Example:
-
-```text
-member/
-├── controller
-├── service
-├── repository
-├── entity
-└── dto
-```
-
----
-
-## Database Access
-
-Only Spring owns:
-
-* User
-* Permission
-* Device registry
-
-Avoid direct modification from NestJS.
-
----
-
-# Database Conventions
-
-Database:
-
-```text
-PostgreSQL
-```
-
----
-
-## Migration
-
-Use:
-
-```text
-Flyway
-```
-
-for Spring Boot.
-
----
-
-## Naming
-
-Tables:
-
-```text
-member
-health_record
-goal
-device
-```
-
-Columns:
-
-```text
-snake_case
-```
-
-Examples:
-
-```text
-created_at
-updated_at
-member_id
-```
-
----
-
-## Primary Keys
-
-Preferred:
-
-```text
-UUID
-```
-
-Avoid auto increment IDs for distributed compatibility.
-
----
-
-# API Conventions
-
-Style:
-
-```text
-REST
-```
-
----
-
-## Resource Naming
-
-Good:
-
-```text
-/api/members
-/api/health-records
-/api/goals
-```
-
-Bad:
-
-```text
-/api/getMember
-/api/createGoal
-```
-
----
-
-## Versioning
-
-All APIs should be versioned.
-
-Example:
-
-```text
-/api/v1/members
-```
-
----
-
-# Event Naming
-
-Format:
-
-```text
-<Entity><Action>Event
-```
+Format: `<Entity><Action>Event`
 
 Examples:
 
@@ -352,69 +92,32 @@ Examples:
 MemberCreatedEvent
 HealthRecordedEvent
 DeviceOfflineEvent
+GoalCompletedEvent
 ```
+
+- Prefer events for: device status updates, notifications, automation triggers.
+- Use an event bus or message broker for inter-service communication.
 
 ---
 
-# Infrastructure Conventions
+## Infrastructure Conventions
 
-Containers:
+- **Local development**: Docker Compose for infrastructure services.
+- **Staging / Production**: Kubernetes + Helm (or equivalent orchestrator).
+- Multi-stage Docker builds for all services.
+- See [Deployment Guide](./deployment.md) for details.
 
-```text
-Docker Compose
-```
+### Service Conventions
 
-for local development.
-
----
-
-Future:
-
-```text
-Kubernetes
-```
-
-for production.
+- **MQTT broker** for IoT device communication (e.g., EMQX, Mosquitto).
+- **Object storage** for photos, documents, archives (e.g., MinIO, S3).
+- **Cache / session store** for performance (e.g., Redis).
 
 ---
 
-## MQTT Broker
+## Logging
 
-Preferred:
-
-```text
-EMQX
-```
-
-Alternative:
-
-```text
-Mosquitto
-```
-
----
-
-## Object Storage
-
-Preferred:
-
-```text
-MinIO
-```
-
-for:
-
-* Photos
-* Documents
-* Archives
-
----
-
-# Logging
-
-Use structured logs.
-
-Include:
+Use structured logs. Include contextual identifiers when available:
 
 ```text
 request_id
@@ -422,49 +125,48 @@ member_id
 device_id
 ```
 
-when available.
-
-Avoid:
+Avoid in production code:
 
 ```text
 console.log
 System.out.println
+System.err.println
 ```
 
-in production code.
+---
+
+## Testing
+
+### Priority Order
+
+1. **Unit Test** — fast, isolated, covers domain logic.
+2. **Integration Test** — covers service interactions.
+3. **E2E Test** — covers critical user journeys.
+
+### Focus Areas
+
+- Domain logic (health calculations, automation rules).
+- Data transformations.
+- Error handling paths.
+
+### Rules
+
+- Pre-push hook runs full test suite — tests must pass before push is accepted.
+- New feature code requires at least unit tests covering happy path and edge cases.
 
 ---
 
-# Testing
-
-Preferred order:
-
-1. Unit Test
-2. Integration Test
-3. E2E Test
-
-Focus on:
-
-* Domain logic
-* Automation rules
-* Health calculations
-
----
-
-# AI Agent Instructions
+## AI Agent Instructions
 
 When generating code:
 
 1. Follow feature-first organization.
 2. Prefer modular monolith design.
 3. Do not introduce microservices.
-4. Do not bypass NestJS from frontend.
-5. Do not bypass Spring for identity data.
+4. Do not bypass the application layer from frontend.
+5. Do not bypass the data layer service for identity data.
 6. Use TypeScript strict mode.
-7. Use PostgreSQL conventions.
+7. Follow database conventions (UUID, snake_case).
 8. Prefer maintainability over abstraction.
 9. Keep architecture simple.
 10. Optimize for long-term extensibility.
-
-```
-```

@@ -1,29 +1,26 @@
-# Family OS Architecture Guide
+# System Architecture Standards
 
-## Project Overview
+## Purpose
 
-Family OS is a digital management platform for household scenarios. It covers:
+This document defines general system architecture principles. It describes architectural patterns and standards without prescribing specific technologies. For technology-specific standards, see:
 
-- Family member management
-- Health records and monitoring
-- Goals and growth system
-- IoT smart device management
-- Home automation
-- AI assistant
-- Family archive and records
+- [Frontend Standards](./frontend.md) — Framework-agnostic frontend conventions
+  - [Next.js Standards](./standards/frontend/nextjs.md) | [Nuxt.js Standards](./standards/frontend/nuxtjs.md)
+- [Engineering Conventions](./conventions.md) — General engineering conventions
+  - [NestJS Standards](./standards/backend/nestjs.md) | [Spring Boot Standards](./standards/backend/spring-boot.md)
 
-The project uses a Monorepo architecture with React + Spring Boot + NestJS as the core stack.
+---
 
 ## Overall Architecture
 
 ```text
-React Web
+Frontend (Web / Mobile)
   ↓
-NestJS (business layer / IoT layer)
+Application Layer (BFF / API Gateway)
   ↓
-Spring Boot (identity and core data layer)
+Domain Services (Identity, Business Logic, IoT, AI)
   ↓
-PostgreSQL
+Data Layer (Database, Cache, Object Storage)
 ```
 
 Device communication path:
@@ -31,143 +28,86 @@ Device communication path:
 ```text
 IoT Device
   ↓
-MQTT Broker
+Message Broker (MQTT / AMQP)
   ↓
-NestJS
+Application Layer
 ```
 
-## Repository Structure
+---
+
+## Repository Structure (Monorepo)
 
 ```text
-family-os/
-├── apps/
-│   ├── web/
-│   ├── api-spring/
-│   └── api-nest/
-├── packages/
-│   ├── shared-types/
-│   ├── ui/
-│   ├── utils/
-│   └── config/
-├── infra/
-│   ├── docker/
-│   ├── k8s/
-│   ├── nginx/
-│   ├── mqtt/
-│   └── database/
-├── docs/
-├── tools/
+project/
+├── apps/                    # Runnable applications
+│   ├── web/                 # Frontend application
+│   ├── api-gateway/         # Application layer / BFF
+│   └── api-core/            # Data layer / identity service
+├── packages/                # Reusable shared code
+│   ├── shared-types/        # Type definitions
+│   ├── ui/                  # Shared UI components
+│   ├── utils/               # Utility functions
+│   └── config/              # Shared configs (lint, format, ts)
+├── infra/                   # Infrastructure as code
+│   ├── docker/              # Docker Compose + Dockerfiles
+│   ├── k8s/                 # Kubernetes / Helm charts
+│   ├── nginx/               # Reverse proxy config
+│   ├── broker/              # Message broker config
+│   └── database/            # Database migration scripts
+├── docs/                    # Project documentation
+├── tools/                   # Dev utilities
 ├── package.json
-├── pnpm-workspace.yaml
+├── workspace.yaml
 └── README.md
 ```
 
-## Application Layer `apps`
+---
 
-`apps` contains all runnable applications.
+## Application Layer (`apps`)
 
-### `web`
+`apps` contains all runnable applications. Each application is independently deployable.
 
-React frontend application.
-
-```text
-apps/web
-├── src
-│   ├── pages
-│   ├── components
-│   ├── hooks
-│   ├── stores
-│   ├── services
-│   ├── layouts
-│   └── routes
-└── public
-```
+### Frontend Application
 
 Responsibilities:
 
-- User interface
-- Data presentation
-- Charts and dashboards
-- IoT control interface
+- User interface with SSR for SEO and fast initial load
+- Data presentation (charts, dashboards, trends)
+- IoT device control interface
+- Multi-language support
+- Multi-environment deployment
 
-### `api-spring`
+See [Frontend Standards](./frontend.md) for conventions.
 
-Spring Boot core data service.
-
-```text
-apps/api-spring
-├── src/main/java/com/family
-├── auth
-├── member
-├── permission
-├── device
-└── common
-```
+### Application Layer Service (BFF)
 
 Responsibilities:
 
-- `auth`: login, JWT, refresh token
-- `member`: family member management
-- `permission`: permission management
-- `device`: device registration and metadata management
+- Business logic coordination
+- IoT device communication (via message broker)
+- AI/LLM integration
+- Notifications and automation
+- API aggregation for frontend
 
-Spring is the system’s Single Source of Truth and owns:
+This layer is **not** a source of truth — it orchestrates calls to the data layer and external services.
 
-- Users
-- Permissions
-- Base data
+### Data Layer Service (Identity / Core)
 
-### `api-nest`
+Responsibilities:
 
-NestJS business service.
+- Authentication and authorization
+- User and permission management
+- Core data ownership (members, devices, base records)
 
-```text
-apps/api-nest
-├── src
-├── modules
-│   ├── health
-│   ├── goal
-│   ├── archive
-│   ├── automation
-│   ├── ai
-│   ├── notification
-│   └── iot
-├── infrastructure
-└── shared
-```
+This service is the **single source of truth** for identity and core data. Other services communicate with it via HTTP API.
 
-Module responsibilities:
+---
 
-- `health`: blood pressure, blood sugar, weight, medical records
-- `goal`: goal management, habit building, growth scoring
-- `archive`: family events, photos, document records
-- `automation`: automation rules and triggers
-- `ai`: health analysis, goal suggestions, family Q&A
-- `notification`: WeChat, email, app push
-- `iot`: MQTT, device state, device control
-
-Automation rule example:
-
-```text
-Kitchen temperature > 35°C
-→ Turn on exhaust fan automatically
-```
-
-## Shared Packages `packages`
+## Shared Packages (`packages`)
 
 ### `shared-types`
 
-Unified type definitions.
-
-```text
-packages/shared-types
-├── member
-├── health
-├── goal
-└── device
-```
-
-Example:
+Unified type definitions shared across all applications and packages.
 
 ```ts
 export interface Member {
@@ -177,190 +117,156 @@ export interface Member {
 }
 ```
 
+**Rule**: packages must not contain business logic.
+
 ### `ui`
 
-Shared React components.
-
-```text
-Button
-Card
-Table
-Modal
-Chart
-```
+Shared UI components used across frontend applications.
 
 ### `utils`
 
-Shared utility functions.
-
-```text
-date
-number
-validator
-formatter
-```
+Shared utility functions (date formatting, number formatting, validators).
 
 ### `config`
 
-Shared configuration.
+Shared configuration for ESLint, Prettier, TypeScript, and environment setup.
 
-```text
-eslint
-prettier
-typescript
-env
-```
+---
 
-## Infrastructure `infra`
+## Infrastructure (`infra`)
 
 ### `docker`
 
-```text
-infra/docker
-├── postgres
-├── redis
-├── mqtt
-├── spring
-└── nest
-```
+Docker Compose for local development. Each service has a multi-stage Dockerfile.
 
 ### `k8s`
 
-Future Kubernetes deployment manifests.
-
-```text
-infra/k8s
-├── spring
-├── nest
-├── postgres
-├── redis
-└── mqtt
-```
+Kubernetes deployment manifests with Helm charts for staging and production.
 
 ### `nginx`
 
-Reverse proxy configuration.
+Reverse proxy configuration for routing frontend, API, and auth requests.
 
-```text
-infra/nginx
-```
+### `broker`
 
-### `mqtt`
+Message broker configuration (MQTT / AMQP).
 
-MQTT broker configuration. Recommended options:
+### `database`
 
-- EMQX
-- Mosquitto
+Database migration scripts and seed data.
 
-## Documentation `docs`
-
-Project documentation directory:
-
-```text
-docs
-├── architecture
-├── api
-├── deployment
-├── mqtt
-└── ai
-```
+---
 
 ## Data Flow Design
 
 ### User Requests
 
 ```text
-React
+Frontend
   ↓
-NestJS
+Application Layer
   ↓
-Spring
+Data Layer Service
   ↓
-PostgreSQL
+Database
 ```
 
 ### IoT Data
 
 ```text
-Sensor
+Sensor / Device
   ↓
-MQTT
+Message Broker
   ↓
-NestJS
+Application Layer
   ↓
-PostgreSQL
+Database / Events
 ```
 
 ### AI Analysis
 
 ```text
-Health Data
+User Request
   ↓
-NestJS AI Module
+Application Layer (AI Module)
   ↓
-LLM
+LLM Provider
   ↓
-Result
+Result (cached + stored)
 ```
 
-## Current Architecture Principles
+---
+
+## Architecture Principles
 
 ### 1. Prefer Modular Monolith
 
-Spring: one application, multiple modules.
-
-Nest: one application, multiple modules.
+Each service is one application with multiple domain modules. Avoid splitting into microservices prematurely.
 
 ### 2. Do Not Split Microservices Early
 
-Consider splitting only when there is a need for:
+Consider splitting only when there is a clear need for:
 
-- Independent deployment
-- Independent scaling
+- Independent deployment cycles
+- Independent scaling requirements
 - Team collaboration boundaries
 
 ### 3. Do Not Share Databases
 
 Services communicate through:
 
-- HTTP API
-- Events
-- MQTT
+- HTTP API (synchronous)
+- Events / Message Broker (asynchronous)
 
-## Future Evolution Roadmap
+Each service owns its database schema. No cross-service direct database access.
 
-### Phase 1
+### 4. Single Source of Truth
 
-```text
-React
-Spring
-Nest
-PostgreSQL
-MQTT
-```
+Core data (identity, permissions, base records) has exactly one owning service. Other services read via API, never via direct database access.
 
-### Phase 2
+---
 
-```text
-+ Redis
-+ MinIO
-+ AI Service
-```
+## Feature Domains
 
-### Phase 3
+The following domains are typical for a platform of this type:
 
-```text
-+ Kubernetes
-+ CI/CD
-+ Monitoring
-```
+| Domain | Responsibility |
+|--------|---------------|
+| Members | Family member profiles and relationships |
+| Health | Health records, monitoring, trends |
+| Goals | Goal setting, habit building, growth tracking |
+| Devices | IoT device registration, control, monitoring |
+| Automation | Rule-based automation triggers and actions |
+| AI | Intelligent analysis, recommendations, Q&A |
+| Archive | Photos, documents, important events |
+| Notifications | Multi-channel alerts (push, email, messaging) |
 
-### Phase 4
+Feature-specific designs are documented in [features/](./features/).
 
-```text
-+ IoT Service
-+ Notification Service
-+ AI Service
-```
+---
 
-Gradually evolve toward a microservice architecture.
+## Evolution Roadmap
+
+### Phase 1 — Foundation
+
+Core applications + database + message broker.
+
+### Phase 2 — Enrichment
+
++ Cache layer (e.g., Redis)
++ Object storage (e.g., MinIO / S3)
++ AI/LLM integration
+
+### Phase 3 — Operations
+
++ Container orchestration (Kubernetes)
++ CI/CD pipelines
++ Monitoring and alerting
+
+### Phase 4 — Scale
+
++ Dedicated IoT service
++ Dedicated notification service
++ Dedicated AI service
+
+Gradually evolve toward a microservice architecture when clear boundaries emerge.

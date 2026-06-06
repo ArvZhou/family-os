@@ -6,7 +6,7 @@ A digital management platform for household scenarios.
 
 **Family members · Health records · Goals · IoT devices · Home automation · AI assistant · Family archives**
 
-[Architecture](.ai/architecture.md) · [API Reference](.ai/api.md) · [Deployment](.ai/deployment.md) · [MQTT](.ai/mqtt.md) · [AI Service](.ai/ai-service.md)
+[Architecture](.ai/architecture.md) · [API Standards](.ai/api.md) · [Deployment](.ai/deployment.md) · [Features](.ai/features/) · [Standards](.ai/standards/)
 
 </div>
 
@@ -27,7 +27,7 @@ A digital management platform for household scenarios.
 ## Tech Stack
 
 ```
-React (Web UI)
+Next.js (SSR + App Router) — Web UI
   ↓
 NestJS (Business layer / IoT layer / AI layer)
   ↓
@@ -38,20 +38,31 @@ PostgreSQL
 Device → MQTT Broker (EMQX) → NestJS
 ```
 
+### Frontend
+
+- **Framework:** Next.js 15+ (SSR, App Router)
+- **Styling:** Tailwind CSS + shadcn/ui
+- **State:** Zustand (client) + TanStack Query (server)
+- **Hooks:** react-use (preferred)
+- **i18n:** next-intl (zh / en)
+- **Testing:** Vitest + @testing-library/react
+- **Linting:** ESLint + Prettier (pre-commit via Husky + lint-staged)
+- **Git Hooks:** commit message lint (commitlint) + pre-push test suite + sensitive-data scan
+
 ### Infrastructure
 
 - **Database:** PostgreSQL (UUID primary keys, Flyway migrations)
 - **Cache / Session:** Redis
 - **Messaging:** MQTT (EMQX or Mosquitto)
 - **Object Storage:** MinIO
-- **Containerization:** Docker Compose (local), Kubernetes (future)
+- **Containerization:** Docker + Docker Compose (local), Kubernetes + Helm (staging / production)
 
 ## Repository Structure
 
 ```
 family-os/
 ├── apps/                         # Runnable applications
-│   ├── web/                      # React frontend
+│   ├── web/                      # Next.js frontend (SSR + App Router)
 │   ├── api-spring/               # Spring Boot — identity & core data
 │   └── api-nest/                 # NestJS — business, IoT, AI
 ├── packages/                     # Shared code
@@ -60,21 +71,21 @@ family-os/
 │   ├── utils/                    # Shared utility functions
 │   └── config/                   # ESLint, Prettier, TS configs
 ├── infra/                        # Infrastructure as code
-│   ├── docker/                   # Docker Compose services
-│   ├── k8s/                      # K8s manifests (planned)
+│   ├── docker/                   # Docker Compose + per-service Dockerfiles
+│   ├── k8s/                      # Helm charts for staging / production
 │   ├── nginx/                    # Reverse proxy config
 │   ├── mqtt/                     # MQTT broker config
 │   └── database/                 # Database migration scripts
 ├── docs/                         # Project documentation
 ├── tools/                        # Dev utilities
-└── .ai/                          # Architecture & design docs
+└── .ai/                          # Architecture & design docs (standards + features)
 ```
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+ (LTS)
 - Java 21+
 - pnpm 9+
 - Docker & Docker Compose
@@ -113,16 +124,34 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Documentation
 
+### General Standards
+
 | Document | Description |
 |----------|-------------|
-| [Architecture](.ai/architecture.md) | Overall system architecture and evolution roadmap |
+| [Architecture](.ai/architecture.md) | System architecture principles and evolution roadmap |
+| [Frontend Standards](.ai/frontend.md) | Framework-agnostic frontend conventions |
+| [API Design Standards](.ai/api.md) | REST API design conventions (versioning, errors, pagination) |
 | [Engineering Conventions](.ai/conventions.md) | Coding standards, naming, folder structure |
-| [API Reference](.ai/api.md) | REST API endpoints and request/response formats |
-| [Deployment Guide](.ai/deployment.md) | Docker Compose, Nginx, production checklist |
-| [MQTT Design](.ai/mqtt.md) | Topics, message format, authentication |
-| [AI Service](.ai/ai-service.md) | LLM integration, prompt design, caching |
+| [Deployment Standards](.ai/deployment.md) | Multi-env config, Docker builds, K8s Helm, checklist |
 
-Chinese versions available alongside each file (`*.zh.md`).
+### Framework-Specific Standards (`standards/`)
+
+| Document | Description |
+|----------|-------------|
+| [Next.js Standards](.ai/standards/frontend/nextjs.md) | App Router, Server Components, next-intl, Docker, Helm |
+| [Nuxt.js Standards](.ai/standards/frontend/nuxtjs.md) | Auto-imports, Composables, @nuxtjs/i18n, Nitro builds |
+| [NestJS Standards](.ai/standards/backend/nestjs.md) | Module structure, validation, MQTT, event-driven architecture |
+| [Spring Boot Standards](.ai/standards/backend/spring-boot.md) | Package structure, Flyway, Jakarta Validation, testing |
+
+### Feature Specs (`features/`)
+
+| Document | Description |
+|----------|-------------|
+| [API Endpoints](.ai/features/api.md) | REST API endpoint definitions and request/response formats |
+| [MQTT Design](.ai/features/mqtt.md) | Topics, message format, authentication |
+| [AI Service](.ai/features/ai-service.md) | LLM integration, prompt design, caching |
+
+Chinese versions available in `.ai/zh/` (`*.zh.md`).
 
 ## Architecture Principles
 
