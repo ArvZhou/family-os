@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# Auto-append Co-authored-by trailer when commit is made by Claude Code
+if [ "$CLAUDECODE" = "1" ]; then
+  echo "" >> "$1"
+  echo "Co-authored-by: Claude Code <noreply@anthropic.com>" >> "$1"
+fi
