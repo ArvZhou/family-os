@@ -14,16 +14,16 @@ A digital management platform for household scenarios.
 
 ## Features
 
-| Domain | What it does |
-|--------|-------------|
-| **Family Members** | Manage family member profiles, relationships, avatars |
-| **Health Records** | Track blood pressure, blood sugar, weight, temperature; view trends |
-| **Goals & Growth** | Set goals, build habits, track growth scores |
-| **IoT Devices** | Register and control smart devices via MQTT |
-| **Home Automation** | Define rules — if sensor X exceeds threshold → do Y |
-| **AI Assistant** | Health analysis, goal recommendations, family Q&A powered by LLM |
-| **Family Archive** | Store photos, documents, and important events as searchable archives |
-| **SSO** | Single sign-on via OAuth2/OIDC (Keycloak, Auth0, Casdoor, etc.) |
+| Domain              | What it does                                                         |
+| ------------------- | -------------------------------------------------------------------- |
+| **Family Members**  | Manage family member profiles, relationships, avatars                |
+| **Health Records**  | Track blood pressure, blood sugar, weight, temperature; view trends  |
+| **Goals & Growth**  | Set goals, build habits, track growth scores                         |
+| **IoT Devices**     | Register and control smart devices via MQTT                          |
+| **Home Automation** | Define rules — if sensor X exceeds threshold → do Y                  |
+| **AI Assistant**    | Health analysis, goal recommendations, family Q&A powered by LLM     |
+| **Family Archive**  | Store photos, documents, and important events as searchable archives |
+| **SSO**             | Single sign-on via OAuth2/OIDC (Keycloak, Auth0, Casdoor, etc.)      |
 
 ## Tech Stack
 
@@ -124,13 +124,13 @@ cd apps/identity-service && ./gradlew flywayMigrate
 cd apps/identity-service && ./gradlew bootRun
 
 # NestJS (in another terminal)
-cd apps/api-nest && pnpm dev
+cd apps/family-service && pnpm dev
 ```
 
 ### 4. Start frontend
 
 ```bash
-cd apps/web && pnpm install && pnpm dev
+cd apps/family-portal && pnpm install && pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -139,31 +139,31 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### General Standards
 
-| Document | Description |
-|----------|-------------|
-| [Architecture](.ai/architecture.md) | System architecture principles and evolution roadmap |
-| [Frontend Standards](.ai/frontend.md) | Framework-agnostic frontend conventions |
-| [API Design Standards](.ai/api.md) | GraphQL & REST API conventions, Swagger, SSO auth |
-| [Engineering Conventions](.ai/conventions.md) | Coding standards, naming, folder structure |
-| [Deployment Standards](.ai/deployment.md) | Multi-env config, Docker builds, K8s Helm, checklist |
+| Document                                      | Description                                          |
+| --------------------------------------------- | ---------------------------------------------------- |
+| [Architecture](.ai/architecture.md)           | System architecture principles and evolution roadmap |
+| [Frontend Standards](.ai/frontend.md)         | Framework-agnostic frontend conventions              |
+| [API Design Standards](.ai/api.md)            | GraphQL & REST API conventions, Swagger, SSO auth    |
+| [Engineering Conventions](.ai/conventions.md) | Coding standards, naming, folder structure           |
+| [Deployment Standards](.ai/deployment.md)     | Multi-env config, Docker builds, K8s Helm, checklist |
 
 ### Framework-Specific Standards (`standards/`)
 
-| Document | Description |
-|----------|-------------|
-| [Next.js Standards](.ai/standards/frontend/nextjs.md) | Apollo Client, codegen, App Router, next-intl, SSO, Docker, Helm |
-| [Nuxt.js Standards](.ai/standards/frontend/nuxtjs.md) | vue-apollo, codegen, auto-imports, @nuxtjs/i18n, SSO, Nitro builds |
-| [NestJS Standards](.ai/standards/backend/nestjs.md) | GraphQL resolvers, Swagger, DataLoaders, SSO guard, MQTT |
-| [Spring Boot Standards](.ai/standards/backend/spring-boot.md) | SpringDoc OpenAPI, Spring Security, OAuth2/OIDC, Flyway, testing |
-| [Terraform Standards](.ai/standards/infra/terraform.md) | Cloud infrastructure as code — VPC, DB, K8s, Redis, DNS, SSL |
+| Document                                                      | Description                                                        |
+| ------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [Next.js Standards](.ai/standards/frontend/nextjs.md)         | Apollo Client, codegen, App Router, next-intl, SSO, Docker, Helm   |
+| [Nuxt.js Standards](.ai/standards/frontend/nuxtjs.md)         | vue-apollo, codegen, auto-imports, @nuxtjs/i18n, SSO, Nitro builds |
+| [NestJS Standards](.ai/standards/backend/nestjs.md)           | GraphQL resolvers, Swagger, DataLoaders, SSO guard, MQTT           |
+| [Spring Boot Standards](.ai/standards/backend/spring-boot.md) | SpringDoc OpenAPI, Spring Security, OAuth2/OIDC, Flyway, testing   |
+| [Terraform Standards](.ai/standards/infra/terraform.md)       | Cloud infrastructure as code — VPC, DB, K8s, Redis, DNS, SSL       |
 
 ### Feature Specs (`features/`)
 
-| Document | Description |
-|----------|-------------|
+| Document                                       | Description                                         |
+| ---------------------------------------------- | --------------------------------------------------- |
 | [API Endpoints & GraphQL](.ai/features/api.md) | REST endpoints + GraphQL query/mutation definitions |
-| [MQTT Design](.ai/features/mqtt.md) | Topics, message format, authentication |
-| [AI Service](.ai/features/ai-service.md) | LLM integration, prompt design, caching |
+| [MQTT Design](.ai/features/mqtt.md)            | Topics, message format, authentication              |
+| [AI Service](.ai/features/ai-service.md)       | LLM integration, prompt design, caching             |
 
 Chinese versions available in `.ai/zh/` (`*.zh.md`).
 

@@ -1,3 +1,14 @@
+buildscript {
+    repositories {
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.flywaydb:flyway-core:11.5.0")
+        classpath("org.flywaydb:flyway-database-postgresql:11.5.0")
+    }
+}
+
 plugins {
     java
     id("org.springframework.boot") version "3.4.0"
@@ -14,6 +25,8 @@ java {
 }
 
 repositories {
+    maven { url = uri("https://maven.aliyun.com/repository/public") }
+    maven { url = uri("https://maven.aliyun.com/repository/spring") }
     mavenCentral()
 }
 
@@ -54,6 +67,56 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
 }
 
+// ---------------------------------------------------------------------------
+// Load .env file (local development only — never committed)
+// ---------------------------------------------------------------------------
+fun loadDotEnv(): Map<String, String> {
+    val envFile = file(".env")
+    if (!envFile.exists()) return emptyMap()
+    return envFile.readLines()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() && !it.startsWith("#") }
+        .map { line ->
+            val eq = line.indexOf('=')
+            if (eq == -1) null
+            else line.substring(0, eq).trim() to line.substring(eq + 1).trim()
+        }
+        .filterNotNull()
+        .toMap()
+}
+
+val dotEnv = loadDotEnv()
+
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// Flyway migration task — uses Flyway API directly (compatible with Gradle 9)
+tasks.register("flywayMigrate") {
+    group = "flyway"
+    description = "Run Flyway database migrations"
+
+    doLast {
+        val dbHost = System.getenv("DB_HOST") ?: dotEnv["DB_HOST"] ?: "localhost"
+        val dbPort = System.getenv("DB_PORT") ?: dotEnv["DB_PORT"] ?: "5432"
+        val dbName = System.getenv("DB_NAME") ?: dotEnv["DB_NAME"] ?: "family_os"
+        val dbUser = System.getenv("DB_USER") ?: dotEnv["DB_USER"] ?: "family_user"
+        val dbPassword = System.getenv("DB_PASSWORD") ?: dotEnv["DB_PASSWORD"] ?: ""
+
+        val url = "jdbc:postgresql://${dbHost}:${dbPort}/${dbName}"
+        logger.lifecycle("Flyway: migrating $url ...")
+
+        val flyway = org.flywaydb.core.Flyway.configure()
+            .dataSource(url, dbUser, dbPassword)
+            .locations("filesystem:src/main/resources/db/migration")
+            .load()
+
+        val result = flyway.migrate()
+        logger.lifecycle("Flyway: ${result.migrationsExecuted} migration(s) executed")
+    }
+}
+
+// Inject .env into bootRun
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+    environment(dotEnv)
 }
