@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # Run full test suite
-pnpm test -- --reporter=verbose
+pnpm test
 
 # Scan for sensitive data (API keys, PII, passwords)
 echo "Scanning for sensitive data..."
