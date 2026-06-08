@@ -36,8 +36,8 @@ dependencies {
     // Web
     implementation("org.springframework.boot:spring-boot-starter-web")
 
-    // Data JPA
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    // MyBatis-Plus
+    implementation("com.baomidou:mybatis-plus-spring-boot3-starter:3.5.10")
 
     // Validation
     implementation("org.springframework.boot:spring-boot-starter-validation")

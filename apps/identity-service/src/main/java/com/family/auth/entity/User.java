@@ -1,40 +1,40 @@
 package com.family.auth.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
-@Entity
-@Table(name = "users")
+@TableName("users")
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @TableId(type = IdType.ASSIGN_UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(nullable = false)
+    @TableField("password_hash")
     private String passwordHash;
 
-    @Column(unique = true)
     private String email;
-
-    @Column
     private String name;
 
-    @Column(name = "external_id")
+    @TableField("external_id")
     private String externalId;
 
-    @Column(name = "created_at", updatable = false)
+    @TableField("created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @TableField("updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "deleted_at")
+    @TableLogic
+    @TableField("deleted_at")
     private LocalDateTime deletedAt;
 }

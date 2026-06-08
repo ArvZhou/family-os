@@ -1,16 +1,12 @@
 spring:
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        format_sql: true
-
   flyway:
     clean-disabled: false
 
 logging:
   level:
     com.family: DEBUG
+    com.family.auth.mapper: TRACE
+    com.family.device.mapper: TRACE
+    com.family.member.mapper: TRACE
+    com.family.permission.mapper: TRACE
     org.springframework.security: DEBUG

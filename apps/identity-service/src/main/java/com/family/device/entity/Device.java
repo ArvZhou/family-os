@@ -1,43 +1,43 @@
 package com.family.device.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
-@Entity
-@Table(name = "devices")
+@TableName("devices")
 public class Device {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @TableId(type = IdType.ASSIGN_UUID)
     private UUID id;
 
-    @Column(name = "device_id", nullable = false, unique = true)
+    @TableField("device_id")
     private String deviceId;
 
-    @Column(nullable = false)
     private String name;
 
-    @Column(name = "device_type")
+    @TableField("device_type")
     private String deviceType;
 
-    @Column
     private String protocol;
-
-    @Column
     private String status;
 
-    @Column(name = "last_seen_at")
+    @TableField("last_seen_at")
     private LocalDateTime lastSeenAt;
 
-    @Column(name = "created_at", updatable = false)
+    @TableField("created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @TableField("updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "deleted_at")
+    @TableLogic
+    @TableField("deleted_at")
     private LocalDateTime deletedAt;
 }

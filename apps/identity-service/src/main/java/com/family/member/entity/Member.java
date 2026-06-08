@@ -1,38 +1,39 @@
 package com.family.member.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
-@Entity
-@Table(name = "members")
+@TableName("members")
 public class Member {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @TableId(type = IdType.ASSIGN_UUID)
     private UUID id;
 
-    @Column(nullable = false)
     private String name;
-
-    @Column
     private LocalDate birthday;
 
-    @Column(name = "relation_type")
+    @TableField("relation_type")
     private String relationType;
 
-    @Column(name = "avatar_url")
+    @TableField("avatar_url")
     private String avatarUrl;
 
-    @Column(name = "created_at", updatable = false)
+    @TableField("created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @TableField("updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "deleted_at")
+    @TableLogic
+    @TableField("deleted_at")
     private LocalDateTime deletedAt;
 }
