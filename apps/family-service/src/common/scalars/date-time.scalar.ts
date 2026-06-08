@@ -5,18 +5,27 @@ import { Kind, ValueNode } from 'graphql';
 export class DateTimeScalar implements CustomScalar<string, Date> {
   description = 'ISO-8601 date-time string';
 
-  parseValue(value: string): Date {
+  parseValue(value: unknown): Date {
+    if (typeof value !== 'string') {
+      throw new TypeError('DateTime scalar must be a string');
+    }
+
     return new Date(value);
   }
 
-  serialize(value: Date): string {
-    return value instanceof Date ? value.toISOString() : value;
+  serialize(value: unknown): string {
+    if (!(value instanceof Date)) {
+      throw new TypeError('DateTime scalar must be a Date instance');
+    }
+
+    return value.toISOString();
   }
 
-  parseLiteral(ast: ValueNode): Date | null {
+  parseLiteral(ast: ValueNode): Date {
     if (ast.kind === Kind.STRING) {
       return new Date(ast.value);
     }
-    return null;
+
+    throw new TypeError('DateTime scalar literal must be a string');
   }
 }
