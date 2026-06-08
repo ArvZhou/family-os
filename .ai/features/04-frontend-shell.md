@@ -64,6 +64,10 @@ MemberDetailPage
 | 表单           | React Hook Form + Zod                                                        |
 | 类型生成       | graphql-codegen → 从 `schema.graphql` 生成 TypeScript                        |
 
+## 视觉风格
+
+- 整体设计尽量参考苹果官网的风格：简洁、留白充足、层次清晰、动效克制、强调高质感与一致性。
+
 ## 关键实现要点
 
 - **Apollo Client 配置**: 使用 `ApolloClient` + `InMemoryCache`，`Authorization: Bearer <token>` 通过 Apollo Link middleware 自动附加

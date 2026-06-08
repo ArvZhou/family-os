@@ -5,7 +5,21 @@
     "delete": "Delete",
     "loading": "Loading...",
     "error": "An error occurred",
-    "back": "Back"
+    "back": "Back",
+    "create": "Create",
+    "edit": "Edit"
+  },
+  "auth": {
+    "title": "Family OS",
+    "subtitle": "Sign in to your family account",
+    "username": "Username",
+    "password": "Password",
+    "login": "Sign In",
+    "loggingIn": "Signing in...",
+    "logout": "Sign Out",
+    "wrongPassword": "Invalid username or password",
+    "notVerified": "Account not verified. Please verify your email or phone.",
+    "loginFailed": "Login failed. Please try again later."
   },
   "dashboard": {
     "title": "Family Dashboard",
@@ -15,5 +29,27 @@
     "devices": "Smart Devices",
     "automation": "Automation Rules",
     "archive": "Family Archive"
+  },
+  "members": {
+    "title": "Family Members",
+    "description": "Manage your family members",
+    "add": "Add Member",
+    "edit": "Edit Member",
+    "empty": "No family members",
+    "emptyHint": "Click the button above to add your first family member",
+    "name": "Name",
+    "birthday": "Birthday",
+    "relation": "Relation",
+    "detail": "Member Detail",
+    "backToList": "Back to member list",
+    "notFound": "Member not found",
+    "confirmDelete": "Are you sure you want to delete this member?"
+  },
+  "relation": {
+    "SPOUSE": "Spouse",
+    "PARENT": "Parent",
+    "CHILD": "Child",
+    "SIBLING": "Sibling",
+    "OTHER": "Other"
   }
 }
