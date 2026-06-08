@@ -63,20 +63,20 @@ health/
 
 ## Naming Conventions
 
-| Type | Convention | Example |
-|------|-----------|---------|
-| Resolver | `<Feature>Resolver` | `HealthResolver` |
-| Controller | `<Feature>Controller` | `HealthController` |
-| Service | `<Feature>Service` | `HealthService` |
-| DTO | `<Action><Feature>Dto` | `CreateHealthRecordDto` |
-| Entity | `<Feature><Type>Entity` | `HealthRecordEntity` |
-| GraphQL Model | `<Feature>` (same as type name) | `HealthRecord` |
-| GraphQL Input | `<Action><Feature>Input` | `CreateHealthRecordInput` |
-| Event | `<Feature><Action>Event` | `HealthRecordedEvent` |
-| DataLoader | `<Feature>Loader` | `HealthRecordLoader` |
-| Module | `<Feature>Module` | `HealthModule` |
-| Guard | `<Feature>Guard` | `AuthGuard`, `SsoGuard` |
-| Interceptor | `<Feature>Interceptor` | `LoggingInterceptor` |
+| Type          | Convention                      | Example                   |
+| ------------- | ------------------------------- | ------------------------- |
+| Resolver      | `<Feature>Resolver`             | `HealthResolver`          |
+| Controller    | `<Feature>Controller`           | `HealthController`        |
+| Service       | `<Feature>Service`              | `HealthService`           |
+| DTO           | `<Action><Feature>Dto`          | `CreateHealthRecordDto`   |
+| Entity        | `<Feature><Type>Entity`         | `HealthRecordEntity`      |
+| GraphQL Model | `<Feature>` (same as type name) | `HealthRecord`            |
+| GraphQL Input | `<Action><Feature>Input`        | `CreateHealthRecordInput` |
+| Event         | `<Feature><Action>Event`        | `HealthRecordedEvent`     |
+| DataLoader    | `<Feature>Loader`               | `HealthRecordLoader`      |
+| Module        | `<Feature>Module`               | `HealthModule`            |
+| Guard         | `<Feature>Guard`                | `AuthGuard`, `SsoGuard`   |
+| Interceptor   | `<Feature>Interceptor`          | `LoggingInterceptor`      |
 
 ---
 
@@ -210,8 +210,8 @@ export class MemberLoader {
   createByIdLoader(): DataLoader<string, Member> {
     return new DataLoader(async (ids: readonly string[]) => {
       const members = await this.memberService.findByIds([...ids]);
-      const memberMap = new Map(members.map(m => [m.id, m]));
-      return ids.map(id => memberMap.get(id) ?? new Error(`Member ${id} not found`));
+      const memberMap = new Map(members.map((m) => [m.id, m]));
+      return ids.map((id) => memberMap.get(id) ?? new Error(`Member ${id} not found`));
     });
   }
 }
@@ -327,11 +327,13 @@ export class CreateHealthRecordDto {
 Enable global validation:
 
 ```ts
-app.useGlobalPipes(new ValidationPipe({
-  whitelist: true,
-  forbidNonWhitelisted: true,
- transform: true,
-}));
+app.useGlobalPipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }),
+);
 ```
 
 ---
@@ -369,7 +371,7 @@ handleTelemetry(@MessagePayload() payload: TelemetryDto) { ... }
 this.mqttService.publish('device/device-xyz/command', { action: 'turn_on' });
 ```
 
-See [MQTT Design](../../features/mqtt.md) for topic conventions and message formats.
+See [MQTT Integration](../../features/08-mqtt-integration.md) for topic conventions and message formats.
 
 ---
 
@@ -379,9 +381,9 @@ See [MQTT Design](../../features/mqtt.md) for topic conventions and message form
 
 Choose one ORM per project and stick with it:
 
-| ORM | Strengths |
-|-----|-----------|
-| **Prisma** | Type-safe queries, auto-generated types, schema-first migrations |
+| ORM         | Strengths                                                                       |
+| ----------- | ------------------------------------------------------------------------------- |
+| **Prisma**  | Type-safe queries, auto-generated types, schema-first migrations                |
 | **TypeORM** | Decorator-based entities, tight NestJS integration, Active Record + Data Mapper |
 
 ### Entity Example (TypeORM)
@@ -407,7 +409,7 @@ export class HealthRecordEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToOne(() => MemberEntity, member => member.healthRecords)
+  @ManyToOne(() => MemberEntity, (member) => member.healthRecords)
   member: MemberEntity;
 }
 ```
@@ -520,10 +522,12 @@ For GraphQL, errors are automatically formatted:
 
 ```json
 {
-  "errors": [{
-    "message": "Member not found",
-    "extensions": { "code": "NOT_FOUND" }
-  }]
+  "errors": [
+    {
+      "message": "Member not found",
+      "extensions": { "code": "NOT_FOUND" }
+    }
+  ]
 }
 ```
 
@@ -540,10 +544,7 @@ describe('HealthResolver', () => {
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
-      providers: [
-        HealthResolver,
-        { provide: HealthService, useClass: MockHealthService },
-      ],
+      providers: [HealthResolver, { provide: HealthService, useClass: MockHealthService }],
     }).compile();
 
     resolver = module.get(HealthResolver);
@@ -562,6 +563,6 @@ describe('HealthResolver', () => {
 
 - [Engineering Conventions](../../conventions.md) — General conventions
 - [API Design Standards](../../api.md) — GraphQL & REST conventions
-- [API Endpoints](../../features/api.md) — Specific GraphQL operations
-- [MQTT Design](../../features/mqtt.md) — IoT communication protocol
-- [AI Service Design](../../features/ai-service.md) — AI/LLM integration
+- [Features](../../features/) — Feature-by-feature designs (01-auth through 14-sso)
+- [MQTT Integration](../../features/08-mqtt-integration.md) — IoT communication protocol
+- [AI Services](../../features/10-ai-services.md) — AI/LLM integration

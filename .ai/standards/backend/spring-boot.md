@@ -16,6 +16,7 @@ Core Data (members, device registry)
 ```
 
 Spring Boot owns:
+
 - Users and authentication (local + SSO/OAuth2)
 - Permissions and role-based access control
 - Device registry and metadata
@@ -34,26 +35,26 @@ src/main/java/com/family/
 ├── auth/
 │   ├── controller/
 │   ├── service/
-│   ├── repository/
+│   ├── mapper/
 │   ├── entity/
 │   ├── dto/
 │   └── security/              # Spring Security config, OAuth2/OIDC
 ├── member/
 │   ├── controller/
 │   ├── service/
-│   ├── repository/
+│   ├── mapper/
 │   ├── entity/
 │   └── dto/
 ├── device/
 │   ├── controller/
 │   ├── service/
-│   ├── repository/
+│   ├── mapper/
 │   ├── entity/
 │   └── dto/
 ├── permission/
 │   ├── controller/
 │   ├── service/
-│   ├── repository/
+│   ├── mapper/
 │   ├── entity/
 │   └── dto/
 └── common/
@@ -73,23 +74,23 @@ src/main/java/com/family/
 
 ## Naming Conventions
 
-| Type | Convention | Example |
-|------|-----------|---------|
-| Controller | `<Feature>Controller` | `MemberController` |
-| Service Interface | `<Feature>Service` | `MemberService` |
-| Service Implementation | `<Feature>ServiceImpl` | `MemberServiceImpl` |
-| Repository | `<Feature>Repository` | `MemberRepository` |
-| Entity | `<Feature>` | `Member` |
-| DTO (Request) | `<Action><Feature>Request` | `CreateMemberRequest` |
-| DTO (Response) | `<Feature>Response` | `MemberResponse` |
-| Mapper | `<Feature>Mapper` | `MemberMapper` |
+| Type                   | Convention                 | Example               |
+| ---------------------- | -------------------------- | --------------------- |
+| Controller             | `<Feature>Controller`      | `MemberController`    |
+| Service Interface      | `<Feature>Service`         | `MemberService`       |
+| Service Implementation | `<Feature>ServiceImpl`     | `MemberServiceImpl`   |
+| Mapper                 | `<Feature>Mapper`          | `MemberMapper`        |
+| Entity                 | `<Feature>`                | `Member`              |
+| DTO (Request)          | `<Action><Feature>Request` | `CreateMemberRequest` |
+| DTO (Response)         | `<Feature>Response`        | `MemberResponse`      |
+| DTO Mapper             | `<Feature>DtoMapper`       | `MemberDtoMapper`     |
 
 ---
 
 ## Layer Pattern
 
 ```text
-Controller → Service → Repository → PostgreSQL
+Controller → Service → Mapper → PostgreSQL
 ```
 
 ### Controller
@@ -105,11 +106,61 @@ Controller → Service → Repository → PostgreSQL
 - Uses interfaces for testability.
 - `@Transactional` for methods modifying multiple entities.
 
-### Repository
+### Mapper
 
-- Extends `JpaRepository` or `CrudRepository`.
-- Complex queries use `@Query` (JPQL) or QueryDSL.
+- MyBatis `@Mapper` interface — one per entity.
+- SQL defined in XML mapper files under `src/main/resources/mapper/`.
+- Complex queries use dynamic SQL with `<if>`, `<choose>`, `<foreach>` tags.
+- Use `@Param` for named parameters when a method has more than one argument.
 - Never expose raw entities to the controller — use DTOs.
+
+```java
+@Mapper
+public interface MemberMapper {
+    Member findById(@Param("id") UUID id);
+    List<Member> findAll();
+    int insert(Member member);
+    int update(Member member);
+    int deleteById(@Param("id") UUID id);
+}
+```
+
+```xml
+<!-- src/main/resources/mapper/MemberMapper.xml -->
+<mapper namespace="com.family.member.mapper.MemberMapper">
+    <resultMap id="MemberResultMap" type="com.family.member.entity.Member">
+        <id property="id" column="id" javaType="java.util.UUID"/>
+        <result property="name" column="name"/>
+        <result property="birthday" column="birthday"/>
+        <result property="relationType" column="relation_type"/>
+        <result property="avatarUrl" column="avatar_url"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="deletedAt" column="deleted_at"/>
+    </resultMap>
+
+    <select id="findById" resultMap="MemberResultMap">
+        SELECT * FROM members WHERE id = #{id} AND deleted_at IS NULL
+    </select>
+
+    <insert id="insert">
+        INSERT INTO members (id, name, birthday, relation_type, avatar_url, created_at, updated_at)
+        VALUES (#{id}, #{name}, #{birthday}, #{relationType}, #{avatarUrl},
+                COALESCE(#{createdAt}, NOW()), COALESCE(#{updatedAt}, NOW()))
+    </insert>
+
+    <update id="update">
+        UPDATE members SET name = #{name}, birthday = #{birthday},
+            relation_type = #{relationType}, avatar_url = #{avatarUrl}, updated_at = NOW()
+        WHERE id = #{id} AND deleted_at IS NULL
+    </update>
+
+    <update id="deleteById">
+        UPDATE members SET deleted_at = NOW(), updated_at = NOW()
+        WHERE id = #{id} AND deleted_at IS NULL
+    </update>
+</mapper>
+```
 
 ---
 
@@ -133,7 +184,7 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-    enabled: true              # Disable in production or restrict to internal
+    enabled: true # Disable in production or restrict to internal
     tags-sorter: alpha
     operations-sorter: alpha
   default-produces-media-type: application/json
@@ -191,11 +242,11 @@ public class CreateMemberRequest {
 
 ### Swagger UI Endpoints
 
-| Endpoint | Description |
-|----------|-------------|
-| `/swagger-ui.html` | Interactive API documentation UI |
-| `/v3/api-docs` | OpenAPI 3.0 spec in JSON |
-| `/v3/api-docs.yaml` | OpenAPI 3.0 spec in YAML |
+| Endpoint            | Description                      |
+| ------------------- | -------------------------------- |
+| `/swagger-ui.html`  | Interactive API documentation UI |
+| `/v3/api-docs`      | OpenAPI 3.0 spec in JSON         |
+| `/v3/api-docs.yaml` | OpenAPI 3.0 spec in YAML         |
 
 **Production**: disable Swagger UI or restrict to internal network.
 
@@ -217,28 +268,27 @@ spring:
       minimum-idle: 5
       connection-timeout: 30000
 
-  jpa:
-    hibernate:
-      ddl-auto: validate          # Never use 'update' in production
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-    show-sql: false               # Disable in production
-
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+
+# MyBatis
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.family
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 ```
 
 ### Conventions
 
-- **UUID primary keys**: `@GeneratedValue(strategy = GenerationType.UUID)`
-- **Snake case columns**: configure via `@Column(name = "column_name")` or naming strategy.
-- **JSONB columns**: use `@JdbcTypeCode(SqlTypes.JSON)` for JSON fields.
-- **Timestamps**: `@CreationTimestamp` and `@UpdateTimestamp` for `created_at` / `updated_at`.
-- **Soft delete**: `@SQLDelete` + `@Where(clause = "deleted_at IS NULL")` for important data.
+- **UUID primary keys**: generate UUID on the Java side (`UUID.randomUUID()`) before insert.
+- **Snake case columns**: use `map-underscore-to-camel-case: true` in MyBatis config for automatic mapping.
+- **Result maps**: define `<resultMap>` in XML for entities with non-trivial column-to-property mappings.
+- **Timestamps**: use `COALESCE(#{createdAt}, NOW())` in insert SQL for auto-managed timestamps.
+- **Soft delete**: use `UPDATE ... SET deleted_at = NOW() WHERE id = #{id}` instead of hard `DELETE`.
 
 ### Flyway Migrations
 
@@ -328,7 +378,7 @@ public class SsoUserService {
      */
     public User syncSsoUser(OAuth2User oAuth2User) {
         String externalId = oAuth2User.getAttribute("sub");
-        return userRepository.findByExternalId(externalId)
+        return userMapper.findByExternalId(externalId)
             .map(existing -> updateFromSso(existing, oAuth2User))
             .orElseGet(() -> createFromSso(oAuth2User));
     }
@@ -425,7 +475,7 @@ Use **JUnit 5** + **Mockito**:
 class MemberServiceTest {
 
     @Mock
-    private MemberRepository memberRepository;
+    private MemberMapper memberMapper;
 
     @InjectMocks
     private MemberServiceImpl memberService;
@@ -433,12 +483,12 @@ class MemberServiceTest {
     @Test
     void shouldCreateMember() {
         var request = new CreateMemberRequest("Alice", LocalDate.of(1990, 1, 1), RelationType.SPOUSE);
-        when(memberRepository.save(any())).thenReturn(new Member("uuid", "Alice", ...));
+        when(memberMapper.insert(any())).thenReturn(1);
 
         var result = memberService.create(request);
 
         assertThat(result.getName()).isEqualTo("Alice");
-        verify(memberRepository).save(any());
+        verify(memberMapper).insert(any());
     }
 }
 ```
@@ -447,7 +497,7 @@ class MemberServiceTest {
 
 - Unit test services with `@Mock` dependencies.
 - Integration test controllers with `@SpringBootTest` + `MockMvc`.
-- Use `@DataJpaTest` for repository tests.
+- Use `@MybatisTest` for mapper tests.
 - Focus on domain logic and edge cases.
 
 ---
@@ -456,4 +506,4 @@ class MemberServiceTest {
 
 - [Engineering Conventions](../../conventions.md) — General conventions
 - [API Design Standards](../../api.md) — GraphQL & REST conventions
-- [API Endpoints](../../features/api.md) — Specific endpoint definitions
+- [Features](../../features/) — Feature-by-feature designs (01-auth through 14-sso)

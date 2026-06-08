@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the general API design standards. Specific endpoint definitions and GraphQL operations belong in [features/api.md](./features/api.md).
+This document defines the general API design standards. Specific endpoint definitions and GraphQL operations belong in [features/](./features/) (ordered by implementation phase).
 
 ---
 
@@ -10,10 +10,10 @@ This document defines the general API design standards. Specific endpoint defini
 
 The system uses a **dual-protocol** approach:
 
-| Protocol | Consumer | Purpose |
-|----------|----------|---------|
-| **GraphQL** | Frontend (Web / Mobile) | Primary API for client applications |
-| **REST** | Internal services, external integrations | Service-to-service communication, third-party APIs |
+| Protocol    | Consumer                                 | Purpose                                            |
+| ----------- | ---------------------------------------- | -------------------------------------------------- |
+| **GraphQL** | Frontend (Web / Mobile)                  | Primary API for client applications                |
+| **REST**    | Internal services, external integrations | Service-to-service communication, third-party APIs |
 
 ```text
 Frontend
@@ -44,14 +44,14 @@ PostgreSQL
 
 ### Naming Conventions
 
-| Element | Convention | Example |
-|---------|-----------|---------|
-| Types | `PascalCase` singular noun | `Member`, `HealthRecord` |
-| Queries | `camelCase`, plural for lists | `members`, `member(id: ID!)` |
-| Mutations | `camelCase`, verb + noun | `createMember`, `deleteMember` |
-| Input types | `PascalCase` + `Input` | `CreateMemberInput` |
+| Element       | Convention                        | Example                                |
+| ------------- | --------------------------------- | -------------------------------------- |
+| Types         | `PascalCase` singular noun        | `Member`, `HealthRecord`               |
+| Queries       | `camelCase`, plural for lists     | `members`, `member(id: ID!)`           |
+| Mutations     | `camelCase`, verb + noun          | `createMember`, `deleteMember`         |
+| Input types   | `PascalCase` + `Input`            | `CreateMemberInput`                    |
 | Subscriptions | `camelCase`, `on` prefix optional | `memberUpdated`, `deviceStatusChanged` |
-| Enums | `UPPER_SNAKE_CASE` values | `BLOOD_PRESSURE`, `DAILY` |
+| Enums         | `UPPER_SNAKE_CASE` values         | `BLOOD_PRESSURE`, `DAILY`              |
 
 ### Error Handling
 
@@ -74,14 +74,14 @@ GraphQL errors follow a structured format:
 
 Common error codes:
 
-| Code | Description |
-|------|-------------|
-| `UNAUTHORIZED` | Authentication required |
-| `FORBIDDEN` | Permission denied |
-| `NOT_FOUND` | Resource not found |
-| `VALIDATION_ERROR` | Invalid input data |
-| `CONFLICT` | Resource conflict |
-| `INTERNAL_ERROR` | Unexpected server error |
+| Code               | Description             |
+| ------------------ | ----------------------- |
+| `UNAUTHORIZED`     | Authentication required |
+| `FORBIDDEN`        | Permission denied       |
+| `NOT_FOUND`        | Resource not found      |
+| `VALIDATION_ERROR` | Invalid input data      |
+| `CONFLICT`         | Resource conflict       |
+| `INTERNAL_ERROR`   | Unexpected server error |
 
 ### Pagination (Relay Connection)
 
@@ -115,17 +115,29 @@ type PageInfo {
 - Use `@deprecated(reason: "...")` for fields being phased out.
 
 ```graphql
-"""A family member profile"""
+"""
+A family member profile
+"""
 type Member {
-  """Unique identifier"""
+  """
+  Unique identifier
+  """
   id: ID!
-  """Display name"""
+  """
+  Display name
+  """
   name: String!
-  """Date of birth in ISO format"""
+  """
+  Date of birth in ISO format
+  """
   birthday: Date!
-  """Relationship to the account owner"""
+  """
+  Relationship to the account owner
+  """
   relation: Relation!
-  """Health records for this member"""
+  """
+  Health records for this member
+  """
   healthRecords(first: Int, after: String): HealthRecordConnection!
 }
 ```
@@ -154,10 +166,10 @@ type Member {
 
 #### Resource Naming
 
-| ✅ Good | ❌ Bad |
-|---------|--------|
-| `/api/v1/members` | `/api/v1/getMember` |
-| `/api/v1/health-records` | `/api/v1/createGoal` |
+| ✅ Good                      | ❌ Bad                       |
+| ---------------------------- | ---------------------------- |
+| `/api/v1/members`            | `/api/v1/getMember`          |
+| `/api/v1/health-records`     | `/api/v1/createGoal`         |
 | `/api/v1/goals/:id/progress` | `/api/v1/updateGoalProgress` |
 
 - Use `kebab-case` for multi-word resources.
@@ -166,28 +178,28 @@ type Member {
 
 ### HTTP Methods
 
-| Method | Semantics | Idempotent | Example |
-|--------|-----------|------------|---------|
-| `GET` | Retrieve resource(s) | Yes | `GET /api/v1/members` |
-| `POST` | Create a resource | No | `POST /api/v1/members` |
-| `PUT` | Full replacement | Yes | `PUT /api/v1/members/:id` |
-| `PATCH` | Partial update | Yes | `PATCH /api/v1/goals/:id/progress` |
-| `DELETE` | Remove a resource | Yes | `DELETE /api/v1/members/:id` |
+| Method   | Semantics            | Idempotent | Example                            |
+| -------- | -------------------- | ---------- | ---------------------------------- |
+| `GET`    | Retrieve resource(s) | Yes        | `GET /api/v1/members`              |
+| `POST`   | Create a resource    | No         | `POST /api/v1/members`             |
+| `PUT`    | Full replacement     | Yes        | `PUT /api/v1/members/:id`          |
+| `PATCH`  | Partial update       | Yes        | `PATCH /api/v1/goals/:id/progress` |
+| `DELETE` | Remove a resource    | Yes        | `DELETE /api/v1/members/:id`       |
 
 ### HTTP Status Codes
 
-| Code | Usage |
-|------|-------|
-| `200 OK` | Successful GET / PUT / PATCH / DELETE |
-| `201 Created` | Successful POST (resource created) |
-| `204 No Content` | Successful DELETE with no response body |
-| `400 Bad Request` | Invalid input / validation error |
-| `401 Unauthorized` | Authentication required |
-| `403 Forbidden` | Permission denied |
-| `404 Not Found` | Resource not found |
-| `409 Conflict` | Duplicate or conflicting resource |
-| `429 Too Many Requests` | Rate limit exceeded |
-| `500 Internal Server Error` | Unexpected server error |
+| Code                        | Usage                                   |
+| --------------------------- | --------------------------------------- |
+| `200 OK`                    | Successful GET / PUT / PATCH / DELETE   |
+| `201 Created`               | Successful POST (resource created)      |
+| `204 No Content`            | Successful DELETE with no response body |
+| `400 Bad Request`           | Invalid input / validation error        |
+| `401 Unauthorized`          | Authentication required                 |
+| `403 Forbidden`             | Permission denied                       |
+| `404 Not Found`             | Resource not found                      |
+| `409 Conflict`              | Duplicate or conflicting resource       |
+| `429 Too Many Requests`     | Rate limit exceeded                     |
+| `500 Internal Server Error` | Unexpected server error                 |
 
 ### Error Response Format
 
@@ -268,11 +280,11 @@ The system reserves **Single Sign-On** support via **OAuth2 / OpenID Connect**:
 - SSO provider is pluggable — support any OIDC-compliant provider (Keycloak, Auth0, Casdoor, Azure AD, etc.).
 - Auth endpoints:
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/auth/sso/login` | `GET` | Redirect to SSO provider |
-| `/auth/sso/callback` | `GET` | Handle SSO provider callback |
-| `/auth/sso/logout` | `GET/POST` | End SSO session |
+| Endpoint             | Method     | Description                  |
+| -------------------- | ---------- | ---------------------------- |
+| `/auth/sso/login`    | `GET`      | Redirect to SSO provider     |
+| `/auth/sso/callback` | `GET`      | Handle SSO provider callback |
+| `/auth/sso/logout`   | `GET/POST` | End SSO session              |
 
 - After SSO login, issue internal JWT access + refresh tokens.
 - SSO provider configuration via environment variables:
@@ -314,7 +326,7 @@ wss://host/ws/device/:id     # Device WebSocket (if needed)
 
 ## Related Documents
 
-- [Feature: API Endpoints & GraphQL Operations](./features/api.md) — Specific definitions
+- [Features](./features/) — Feature-by-feature API designs (01-auth through 14-sso)
 - [NestJS Standards](./standards/backend/nestjs.md) — GraphQL & REST implementation
 - [Spring Boot Standards](./standards/backend/spring-boot.md) — REST & Swagger implementation
 - [Frontend Standards](./frontend.md) — GraphQL client conventions

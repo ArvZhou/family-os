@@ -275,47 +275,81 @@ Identity, permissions, and core data have exactly one owning service (Spring Boo
 
 ## Feature Domains
 
-| Domain | Responsibility | API |
-|--------|---------------|-----|
-| Members | Family member profiles and relationships | GraphQL + REST |
-| Health | Health records, monitoring, trends | GraphQL + REST |
-| Goals | Goal setting, habit building, growth tracking | GraphQL + REST |
-| Devices | IoT device registration, control, monitoring | GraphQL + REST + MQTT |
-| Automation | Rule-based automation triggers and actions | GraphQL + REST |
-| AI | Intelligent analysis, recommendations, Q&A | GraphQL |
-| Archive | Photos, documents, important events | GraphQL + REST |
-| Notifications | Multi-channel alerts | GraphQL + REST |
-| Auth / SSO | Authentication, SSO, permissions | REST + OAuth2/OIDC |
+| Domain        | Responsibility                                | API                   |
+| ------------- | --------------------------------------------- | --------------------- |
+| Members       | Family member profiles and relationships      | GraphQL + REST        |
+| Health        | Health records, monitoring, trends            | GraphQL + REST        |
+| Goals         | Goal setting, habit building, growth tracking | GraphQL + REST        |
+| Devices       | IoT device registration, control, monitoring  | GraphQL + REST + MQTT |
+| Automation    | Rule-based automation triggers and actions    | GraphQL + REST        |
+| AI            | Intelligent analysis, recommendations, Q&A    | GraphQL               |
+| Archive       | Photos, documents, important events           | GraphQL + REST        |
+| Notifications | Multi-channel alerts                          | GraphQL + REST        |
+| Auth / SSO    | Authentication, SSO, permissions              | REST + OAuth2/OIDC    |
 
-Feature-specific designs are documented in [features/](./features/).
+Feature-specific designs are documented in [features/](./features/), ordered by implementation dependency:
+
+| #   | Feature                                               | Service     | Description                     |
+| --- | ----------------------------------------------------- | ----------- | ------------------------------- |
+| 01  | [Auth](./features/01-auth.md)                         | Spring Boot | Registration, login, JWT        |
+| 02  | [Members](./features/02-members.md)                   | Spring Boot | Family member profiles          |
+| 03  | [GraphQL Gateway](./features/03-graphql-gateway.md)   | NestJS      | GraphQL API + Spring Boot proxy |
+| 04  | [Frontend Shell](./features/04-frontend-shell.md)     | Next.js     | Login page, layout, member list |
+| 05  | [Health Records](./features/05-health-records.md)     | NestJS      | Health metrics, trends          |
+| 06  | [Goals](./features/06-goals.md)                       | NestJS      | Goal setting, progress tracking |
+| 07  | [Device Registry](./features/07-device-registry.md)   | Spring Boot | Device registration, status     |
+| 08  | [MQTT Integration](./features/08-mqtt-integration.md) | NestJS      | IoT device communication        |
+| 09  | [Device Control](./features/09-device-control.md)     | NestJS      | Device commands + subscriptions |
+| 10  | [AI Services](./features/10-ai-services.md)           | NestJS      | LLM analysis, recommendations   |
+| 11  | [Automation](./features/11-automation.md)             | NestJS      | Rule-based triggers             |
+| 12  | [Notifications](./features/12-notifications.md)       | NestJS      | Multi-channel alerts            |
+| 13  | [Archive](./features/13-archive.md)                   | NestJS      | Photo/document storage          |
+| 14  | [SSO](./features/14-sso.md)                           | Spring Boot | OAuth2/OIDC single sign-on      |
 
 ---
 
 ## Evolution Roadmap
 
-### Phase 1 — Foundation
+### Phase 1 — Foundation (Features 01–04)
 
-Core applications + PostgreSQL + MQTT broker + GraphQL API + JWT auth.
+[01-auth](./features/01-auth.md) → [02-members](./features/02-members.md) → [03-graphql-gateway](./features/03-graphql-gateway.md) → [04-frontend-shell](./features/04-frontend-shell.md)
 
-### Phase 2 — Enrichment
+Delivers: Login, JWT auth, family member management, GraphQL API, Next.js frontend shell.
 
-+ Redis (cache + sessions)
-+ MinIO (object storage)
-+ AI/LLM integration
-+ SSO (OAuth2/OIDC) integration
+### Phase 2 — Core Domains (Features 05–07)
 
-### Phase 3 — Operations
+[05-health-records](./features/05-health-records.md) → [06-goals](./features/06-goals.md) → [07-device-registry](./features/07-device-registry.md)
 
-+ Kubernetes + Helm
-+ CI/CD pipelines
-+ Monitoring (Prometheus + Grafana)
-+ Log aggregation (ELK / Loki)
+Delivers: Health metric tracking, goal management, IoT device registration.
 
-### Phase 4 — Scale
+### Phase 3 — IoT & Real-time (Features 08–09)
 
-+ Dedicated IoT service
-+ Dedicated notification service
-+ Dedicated AI service
-+ GraphQL federation (if needed)
+[08-mqtt-integration](./features/08-mqtt-integration.md) → [09-device-control](./features/09-device-control.md)
 
-Gradually evolve toward a microservice architecture when clear boundaries emerge.
+Delivers: MQTT device telemetry, real-time device control, GraphQL subscriptions.
+
+Infra additions: MQTT broker (EMQX).
+
+### Phase 4 — Intelligence (Features 10–11)
+
+[10-ai-services](./features/10-ai-services.md) → [11-automation](./features/11-automation.md)
+
+Delivers: AI health analysis, goal recommendations, family Q&A, automation rules.
+
+Infra additions: Redis (cache), LLM API keys.
+
+### Phase 5 — Enrichment (Features 12–14)
+
+[12-notifications](./features/12-notifications.md) → [13-archive](./features/13-archive.md) → [14-sso](./features/14-sso.md)
+
+Delivers: Multi-channel notifications, family archive (photos/docs), OAuth2/OIDC SSO.
+
+Infra additions: MinIO (object storage).
+
+### Phase 6 — Operations (Future)
+
+Kubernetes + Helm, CI/CD, monitoring (Prometheus + Grafana), log aggregation.
+
+### Phase 7 — Scale (Distant Future)
+
+Microservice extraction: dedicated IoT service, notification service, AI service. GraphQL federation when service boundaries solidify.
