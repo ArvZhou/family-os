@@ -93,11 +93,16 @@ DELETE /api/v1/members/:id      # 逻辑删除
 
 ## 关键实现要点
 
-- **数据归属**: 成员数据属于 Spring Boot，NestJS 通过 REST 读取
-- **逻辑删除**: MyBatis-Plus `@TableLogic` 自动处理，DELETE → `SET deleted_at = now()`
-- **关系枚举**: `relation_type` 存储为字符串枚举值，Java 侧映射到 `RelationType` enum
-- **输入校验**: `name` 必填（1-50字符），`birthday` 必填（不能是未来日期），`relationType` 必须是枚举值之一
-- **全局异常处理**: 使用已有的 `GlobalExceptionHandler` + `EntityNotFoundException`
+- **数据归属**: 成员数据属于 Spring Boot，NestJS 通过 REST 读取并暴露为 GraphQL
+- **逻辑删除**: MyBatis-Plus `@TableLogic` 自动处理，DELETE → `SET deleted_at = now()`，SELECT 自动过滤 `deleted_at IS NULL`
+- **关系枚举**: Java 侧 `RelationType` enum（SPOUSE/PARENT/CHILD/SIBLING/OTHER），校验不区分大小写
+- **输入校验**: Service 层业务校验（`IllegalArgumentException` → 400 BAD_REQUEST）
+  - `name`: 1-50 字符，trim 处理
+  - `birthday`: 不能是未来日期
+  - `relationType`: 必须是合法枚举值
+- **PUT 部分更新**: 仅更新非 null 字段，null 字段保持原值（通过 `UpdateMemberRequest`）
+- **时间戳**: `@TableField(fill = ...)` + `MetaObjectHandler` 自动填充
+- **全局异常处理**: `EntityNotFoundException` → 404，`IllegalArgumentException` → 400
 
 ## 验收标准
 

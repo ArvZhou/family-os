@@ -25,6 +25,7 @@ import { NotificationModule } from './modules/notification/notification.module';
       sortSchema: true,
       playground: process.env.NODE_ENV !== 'production',
       introspection: process.env.NODE_ENV !== 'production',
+      context: ({ req }: { req: any }) => ({ req }),
       subscriptions: {
         'graphql-ws': true,
       },

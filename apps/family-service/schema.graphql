@@ -1,0 +1,133 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""Authentication response with tokens and user info"""
+type AuthPayload {
+  """JWT access token"""
+  accessToken: String!
+
+  """Token expiry in seconds"""
+  expiresIn: Int!
+
+  """JWT refresh token"""
+  refreshToken: String!
+
+  """Authenticated user"""
+  user: User!
+}
+
+"""Input for creating a family member"""
+input CreateMemberInput {
+  """Avatar URL"""
+  avatarUrl: String
+
+  """Date of birth (ISO format, yyyy-MM-dd)"""
+  birthday: String!
+
+  """Display name"""
+  name: String!
+
+  """Relationship type"""
+  relation: Relation!
+}
+
+"""Login credentials"""
+input LoginInput {
+  """Password"""
+  password: String!
+
+  """Username"""
+  username: String!
+}
+
+"""A family member profile"""
+type Member {
+  """Avatar URL"""
+  avatarUrl: String
+
+  """Date of birth (ISO format)"""
+  birthday: String!
+
+  """Unique identifier"""
+  id: ID!
+
+  """Display name"""
+  name: String!
+
+  """Relationship to the account owner"""
+  relation: Relation!
+}
+
+type Mutation {
+  """Create a new family member"""
+  createMember(input: CreateMemberInput!): Member!
+
+  """Delete a family member (soft delete)"""
+  deleteMember(id: ID!): Boolean!
+
+  """Login with username and password"""
+  login(input: LoginInput!): AuthPayload!
+
+  """Refresh access token"""
+  refreshToken(input: RefreshTokenInput!): AuthPayload!
+
+  """Update an existing family member"""
+  updateMember(id: ID!, input: UpdateMemberInput!): Member!
+}
+
+type Query {
+  """Get a single member by ID"""
+  member(id: ID!): Member
+
+  """List all family members"""
+  members: [Member!]!
+
+  """Returns a lightweight health check response."""
+  ping: String!
+}
+
+"""Refresh token input"""
+input RefreshTokenInput {
+  """Refresh token"""
+  refreshToken: String!
+}
+
+"""Family relationship type"""
+enum Relation {
+  CHILD
+  OTHER
+  PARENT
+  SIBLING
+  SPOUSE
+}
+
+"""Input for updating a family member"""
+input UpdateMemberInput {
+  """Avatar URL"""
+  avatarUrl: String
+
+  """Date of birth (ISO format, yyyy-MM-dd)"""
+  birthday: String
+
+  """Display name"""
+  name: String
+
+  """Relationship type"""
+  relation: Relation
+}
+
+"""A user account"""
+type User {
+  """Email address"""
+  email: String
+
+  """Unique identifier"""
+  id: ID!
+
+  """Display name"""
+  name: String!
+
+  """Username"""
+  username: String!
+}

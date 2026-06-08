@@ -108,40 +108,83 @@ Controller → Service → Mapper → PostgreSQL
 
 ### Mapper
 
-- MyBatis `@Mapper` interface — one per entity.
-- SQL defined in XML mapper files under `src/main/resources/mapper/`.
-- Complex queries use dynamic SQL with `<if>`, `<choose>`, `<foreach>` tags.
-- Use `@Param` for named parameters when a method has more than one argument.
+- MyBatis-Plus `@Mapper` interface — 继承 `BaseMapper<T>` 即可获得标准 CRUD。
+- 无需 XML mapper 文件，除非有复杂联表查询。
+- 自定义查询使用 MyBatis-Plus `LambdaQueryWrapper` 或在接口上添加 `@Select` 注解。
+- 逻辑删除用 `@TableLogic` 注解，自动处理 SELECT/DELETE。
 - Never expose raw entities to the controller — use DTOs.
 
 ```java
 @Mapper
-public interface MemberMapper {
-    Member findById(@Param("id") UUID id);
-    List<Member> findAll();
-    int insert(Member member);
-    int update(Member member);
-    int deleteById(@Param("id") UUID id);
+public interface MemberMapper extends BaseMapper<Member> {
+    // BaseMapper 自动提供: selectById, selectList, insert, updateById, deleteById
+    // 自定义查询可在此添加
 }
 ```
 
-```xml
-<!-- src/main/resources/mapper/MemberMapper.xml -->
-<mapper namespace="com.family.member.mapper.MemberMapper">
-    <resultMap id="MemberResultMap" type="com.family.member.entity.Member">
-        <id property="id" column="id" javaType="java.util.UUID"/>
-        <result property="name" column="name"/>
-        <result property="birthday" column="birthday"/>
-        <result property="relationType" column="relation_type"/>
-        <result property="avatarUrl" column="avatar_url"/>
-        <result property="createdAt" column="created_at"/>
-        <result property="updatedAt" column="updated_at"/>
-        <result property="deletedAt" column="deleted_at"/>
-    </resultMap>
+### Entity
 
-    <select id="findById" resultMap="MemberResultMap">
-        SELECT * FROM members WHERE id = #{id} AND deleted_at IS NULL
-    </select>
+- Entity 使用 MyBatis-Plus 注解映射数据库表。
+- `@TableId(type = IdType.ASSIGN_UUID)` — 注意：`java.util.UUID` 类型需手动 `UUID.randomUUID()`，因为 MyBatis-Plus 的 ASSIGN_UUID 只支持 String。
+- `@TableLogic` — 标记逻辑删除字段（`deleted_at`），MyBatis-Plus 自动改写 DELETE 为 UPDATE，SELECT 自动追加 `WHERE deleted_at IS NULL`。
+- `@TableField(fill = FieldFill.INSERT)` / `FieldFill.INSERT_UPDATE` — 配合 `MetaObjectHandler` 自动填充时间戳。
+
+```java
+@Data
+@TableName("members")
+public class Member {
+    @TableId(type = IdType.ASSIGN_UUID)
+    private UUID id;                    // Service 层手动 UUID.randomUUID()
+
+    private String name;
+
+    @TableField("relation_type")
+    private String relationType;
+
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
+
+    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt;
+
+    @TableLogic
+    @TableField("deleted_at")
+    private LocalDateTime deletedAt;
+}
+```
+
+### MetaObjectHandler
+
+MyBatis-Plus 自动填充 created_at / updated_at：
+
+```java
+@Component
+public class MetaObjectHandlerConfig implements MetaObjectHandler {
+    @Override
+    public void insertFill(MetaObject metaObject) {
+        this.strictInsertFill(metaObject, "createdAt", LocalDateTime.class, LocalDateTime.now());
+        this.strictInsertFill(metaObject, "updatedAt", LocalDateTime.class, LocalDateTime.now());
+    }
+    @Override
+    public void updateFill(MetaObject metaObject) {
+        this.strictUpdateFill(metaObject, "updatedAt", LocalDateTime.class, LocalDateTime.now());
+    }
+}
+```
+
+### UUID TypeHandler
+
+MyBatis 3.5.x 不含 `UUIDTypeHandler`，需要自定义：
+
+```java
+@MappedTypes(UUID.class)
+public class UUIDTypeHandler extends BaseTypeHandler<UUID> {
+    // setNonNullParameter → ps.setObject(i, uuid)
+    // getNullableResult → rs.getObject(col, UUID.class)
+}
+```
+
+在 `application.yml` 注册：`mybatis-plus.type-handlers-package: com.family.common.type`
 
     <insert id="insert">
         INSERT INTO members (id, name, birthday, relation_type, avatar_url, created_at, updated_at)
@@ -159,6 +202,7 @@ public interface MemberMapper {
         UPDATE members SET deleted_at = NOW(), updated_at = NOW()
         WHERE id = #{id} AND deleted_at IS NULL
     </update>
+
 </mapper>
 ```
 
@@ -273,10 +317,17 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
-# MyBatis
-mybatis:
-  mapper-locations: classpath:mapper/*.xml
+# MyBatis-Plus
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml # XML mapper（如需要复杂查询）
   type-aliases-package: com.family
+  type-handlers-package: com.family.common.type # UUIDTypeHandler
+  global-config:
+    db-config:
+      id-type: ASSIGN_UUID
+      logic-delete-field: deletedAt
+      logic-delete-value: 'now()'
+      logic-not-delete-value: 'null'
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
@@ -284,21 +335,21 @@ mybatis:
 
 ### Conventions
 
-- **UUID primary keys**: generate UUID on the Java side (`UUID.randomUUID()`) before insert.
-- **Snake case columns**: use `map-underscore-to-camel-case: true` in MyBatis config for automatic mapping.
-- **Result maps**: define `<resultMap>` in XML for entities with non-trivial column-to-property mappings.
-- **Timestamps**: use `COALESCE(#{createdAt}, NOW())` in insert SQL for auto-managed timestamps.
-- **Soft delete**: use `UPDATE ... SET deleted_at = NOW() WHERE id = #{id}` instead of hard `DELETE`.
+- **UUID primary keys**: MyBatis-Plus `ASSIGN_UUID` 不支持 `java.util.UUID` 类型，需在 Service 层手动 `UUID.randomUUID()`。
+- **Snake case columns**: `map-underscore-to-camel-case: true` 自动映射（如 `relation_type` ↔ `relationType`）。
+- **逻辑删除**: `@TableLogic` + `logic-delete-field: deletedAt` 自动处理 DELETE → UPDATE + SELECT 过滤。
+- **时间戳**: `MetaObjectHandler` + `@TableField(fill = ...)` 自动填充，无需手写 SQL。
+- **XML mapper**: BaseMapper 提供标准 CRUD，无需 XML。只有复杂联表查询才需要手写 XML。
+- **类型转换**: `@TableField("column_name")` 显式指定列名（如 `password_hash`、`external_id`）。
 
 ### Flyway Migrations
 
 ```text
 src/main/resources/db/migration/
-├── V1__create_users.sql
-├── V2__create_members.sql
-├── V3__create_devices.sql
-├── V4__create_permissions.sql
-└── V5__add_member_avatar_url.sql
+├── V1__create_users_table.sql
+├── V2__add_verified_and_phone.sql
+├── V3__create_members_table.sql
+└── ...
 ```
 
 Naming: `V<version>__<description>.sql`

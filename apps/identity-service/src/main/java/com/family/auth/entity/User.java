@@ -1,5 +1,6 @@
 package com.family.auth.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -23,15 +24,19 @@ public class User {
     private String passwordHash;
 
     private String email;
+    private String phone;
     private String name;
+
+    @TableField("verified")
+    private Boolean verified;
 
     @TableField("external_id")
     private String externalId;
 
-    @TableField("created_at")
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 
-    @TableField("updated_at")
+    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedAt;
 
     @TableLogic

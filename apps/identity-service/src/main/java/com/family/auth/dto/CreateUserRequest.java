@@ -5,15 +5,18 @@ import jakarta.validation.constraints.NotBlank;
 
 @Schema(description = "Request to create a user")
 public record CreateUserRequest(
-    @Schema(description = "Username", example = "alice")
-    @NotBlank String username,
+        @Schema(description = "Username", example = "alice")
+        @NotBlank String username,
 
-    @Schema(description = "Password")
-    @NotBlank String password,
+        @Schema(description = "Password (min 8 characters)")
+        @NotBlank String password,
 
-    @Schema(description = "Email", example = "alice@example.com")
-    String email,
+        @Schema(description = "Email (used for verification)", example = "alice@example.com")
+        String email,
 
-    @Schema(description = "Display name", example = "Alice")
-    @NotBlank String name
-) {}
+        @Schema(description = "Phone number (used for verification)", example = "+8613800138000")
+        String phone,
+
+        @Schema(description = "Display name", example = "Alice")
+        @NotBlank String name) {
+}

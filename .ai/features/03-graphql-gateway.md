@@ -114,12 +114,14 @@ scalar DateTime # ISO datetime string
 
 ## 关键实现要点
 
-- **NestJS 项目**: `apps/family-service`，使用 `@nestjs/graphql` (code-first 或 schema-first)
-- **HTTP 调用**: 使用 `@nestjs/axios` 的 `HttpService` 调用 Spring Boot REST
-- **认证转发**: NestJS Guard 从请求头提取 `Authorization: Bearer <token>`，原样附加到对 Spring Boot 的 HTTP 请求
-- **错误映射**: Spring Boot 返回的 401/404/400 映射为 GraphQL errors，带 `extensions.code`
-- **DataLoader**: 在 `member` 查询中，如果后续需要按 ID 批量加载（如 health records），预留 DataLoader
-- **Schema 导出**: 构建时导出 `schema.graphql` 到 `packages/graphql-schema/`，供前端 codegen 使用
+- **NestJS 项目**: `apps/family-service`，使用 `@nestjs/graphql` code-first 方式（`autoSchemaFile: schema.graphql`）
+- **HTTP 调用**: 使用 `@nestjs/axios` 的 `HttpService` 调用 Spring Boot REST，Identity Service 地址通过 `IDENTITY_SERVICE_URL` 环境变量配置（默认 `http://localhost:8080`）
+- **认证转发**: Resolver 通过 `@Context() ctx` 获取 `req.headers.authorization`，原样附加到对 Spring Boot 的 HTTP 请求头。无需验证 token——Spring Boot 负责验证
+- **JWT 密钥**: 开发环境有默认值（`JWT_SECRET`/`JWT_REFRESH_SECRET`），生产环境必须覆盖
+- **错误映射**: Spring Boot 返回的 401 → GraphQL UNAUTHENTICATED，404 → null（Query）/ GraphQL NOT_FOUND（Mutation 抛异常），400 → GraphQL BAD_REQUEST
+- **Context 配置**: `GraphQLModule.forRoot({ context: ({ req }) => ({ req }) })` 使 resolver 能访问原始请求头
+- **ValidationPipe**: 仅保留 `transform: true`，关闭 `whitelist` / `forbidNonWhitelisted`（GraphQL InputType 用 `@Field` 而非 `class-validator`）
+- **Schema 导出**: 构建时自动生成 `schema.graphql` 供前端 codegen 使用
 
 ## 模块结构
 
@@ -128,17 +130,17 @@ apps/family-service/src/modules/
 ├── auth/
 │   ├── auth.resolver.ts      # login, refreshToken mutations
 │   ├── auth.service.ts       # HTTP → Spring Boot /api/v1/auth/*
+│   ├── models/
+│   │   ├── auth.model.ts     # AuthPayload, LoginInput, RefreshTokenInput
+│   │   └── user.model.ts     # User ObjectType
 │   └── auth.module.ts
 ├── member/
-│   ├── member.resolver.ts    # members, member queries + mutations
+│   ├── member.resolver.ts    # members, member queries + CRUD mutations
 │   ├── member.service.ts     # HTTP → Spring Boot /api/v1/members/*
+│   ├── models/
+│   │   └── member.model.ts   # Member, Relation enum, CreateMemberInput, UpdateMemberInput
 │   └── member.module.ts
-└── common/
-    ├── guards/
-    │   └── auth.guard.ts     # JWT 提取 + 转发
-    └── scalars/
-        ├── date.scalar.ts    # (已存在)
-        └── date-time.scalar.ts # (已存在)
+└── common/                   # (后续 DataLoader, guards 放这里)
 ```
 
 ## 验收标准
