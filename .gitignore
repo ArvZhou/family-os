@@ -52,6 +52,7 @@ docker-compose.override.yml
 src/generated/
 apps/family-portal/src/generated/
 apps/family-service/src/generated/
+next-env.d.ts
 
 # Gradle
 .gradle/
