@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useCallback, useEffect } from 'react';
 import { useAuthStore } from '@/stores/auth.store';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/routing';
 
 interface AuthContextType {
   login: (
@@ -17,8 +17,13 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const store = useAuthStore();
   const router = useRouter();
+
+  // Select stable function references directly — Zustand actions never change identity
+  const loginAction = useAuthStore((s) => s.login);
+  const logoutAction = useAuthStore((s) => s.logout);
+  const setRefreshToken = useAuthStore((s) => s.setRefreshToken);
+  const accessToken = useAuthStore((s) => s.accessToken);
 
   const login = useCallback(
     (
@@ -26,21 +31,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshToken: string,
       user: { id: string; name: string; email: string },
     ) => {
-      store.login(accessToken, user);
+      loginAction(accessToken, user);
       document.cookie = `refreshToken=${refreshToken}; path=/; max-age=604800; SameSite=Lax`;
     },
-    [store],
+    [loginAction],
   );
 
   const logout = useCallback(() => {
-    store.logout();
+    logoutAction();
     document.cookie = 'refreshToken=; path=/; max-age=0';
     router.push('/login');
-  }, [store, router]);
+  }, [logoutAction, router]);
 
   const getToken = useCallback(() => {
-    return store.accessToken;
-  }, [store.accessToken]);
+    return accessToken;
+  }, [accessToken]);
 
   // Restore session from cookie on mount
   useEffect(() => {
@@ -49,9 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .find((row) => row.startsWith('refreshToken='))
       ?.split('=')[1];
     if (refreshToken) {
-      store.setRefreshToken(refreshToken);
+      setRefreshToken(refreshToken);
     }
-  }, [store]);
+    // setRefreshToken is a Zustand action — stable reference, never changes
+  }, [setRefreshToken]);
 
   return (
     <AuthContext.Provider value={{ login, logout, getToken }}>{children}</AuthContext.Provider>
