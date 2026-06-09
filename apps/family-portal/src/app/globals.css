@@ -1,1 +1,139 @@
 @import 'tailwindcss';
+
+@theme {
+  --color-app-bg: #f5f5f7;
+  --color-app-surface: #ffffff;
+  --color-app-text: #1d1d1f;
+  --color-app-text-secondary: #86868b;
+  --color-app-text-tertiary: #d2d2d7;
+  --color-app-blue: #0071e3;
+  --color-app-blue-hover: #0077ed;
+  --color-app-red: #ff3b30;
+  --color-app-green: #34c759;
+  --color-app-orange: #ff9500;
+  --color-app-purple: #af52de;
+  --color-app-teal: #5ac8fa;
+  --color-app-pink: #ff2d55;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+@utility animate-fade-in-up {
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@utility animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
+@utility animate-scale-in {
+  animation: scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@utility animate-pulse-soft {
+  animation: pulse-soft 4s ease-in-out infinite;
+}
+
+@utility delay-100 {
+  animation-delay: 100ms;
+}
+@utility delay-200 {
+  animation-delay: 200ms;
+}
+@utility delay-300 {
+  animation-delay: 300ms;
+}
+@utility delay-400 {
+  animation-delay: 400ms;
+}
+@utility delay-500 {
+  animation-delay: 500ms;
+}
+@utility delay-600 {
+  animation-delay: 600ms;
+}
+
+@utility text-gradient-blue {
+  background: linear-gradient(135deg, #0071e3 0%, #5ac8fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@utility text-gradient-warm {
+  background: linear-gradient(135deg, #ff9500 0%, #ff2d55 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@utility text-gradient-green {
+  background: linear-gradient(135deg, #34c759 0%, #5ac8fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@utility text-gradient-purple {
+  background: linear-gradient(135deg, #af52de 0%, #ff2d55 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}

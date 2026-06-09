@@ -7,19 +7,33 @@
     "error": "An error occurred",
     "back": "Back",
     "create": "Create",
-    "edit": "Edit"
+    "edit": "Edit",
+    "comingSoon": "More features coming soon"
+  },
+  "nav": {
+    "brand": "Family OS",
+    "members": "Members",
+    "health": "Health",
+    "goals": "Goals",
+    "devices": "Devices",
+    "switchToEn": "EN",
+    "switchToZh": "中文"
   },
   "auth": {
     "title": "Family OS",
     "subtitle": "Sign in to your family account",
     "username": "Username",
     "password": "Password",
+    "enterUsername": "Enter username",
+    "enterPassword": "Enter password",
     "login": "Sign In",
     "loggingIn": "Signing in...",
     "logout": "Sign Out",
+    "enterCredentials": "Please enter username and password",
     "wrongPassword": "Invalid username or password",
     "notVerified": "Account not verified. Please verify your email or phone.",
-    "loginFailed": "Login failed. Please try again later."
+    "loginFailed": "Login failed. Please try again later.",
+    "footer": "Family Digital Management Platform"
   },
   "dashboard": {
     "title": "Family Dashboard",
@@ -31,17 +45,25 @@
     "archive": "Family Archive"
   },
   "members": {
-    "title": "Family Members",
-    "description": "Manage your family members",
+    "heroTag": "Family Management",
+    "title": "Family",
+    "titleLine2": "Members",
+    "description": "Manage your family members and track their health and activities",
     "add": "Add Member",
+    "addFirst": "Add First Member",
     "edit": "Edit Member",
-    "empty": "No family members",
-    "emptyHint": "Click the button above to add your first family member",
+    "empty": "No Family Members",
+    "emptyHint": "Add your first family member to start tracking their health and activities",
     "name": "Name",
+    "enterName": "Enter name",
     "birthday": "Birthday",
     "relation": "Relation",
+    "basicInfo": "Basic Info",
+    "more": "More",
+    "avatar": "Avatar",
+    "noAvatar": "No avatar",
     "detail": "Member Detail",
-    "backToList": "Back to member list",
+    "backToList": "Back to Members",
     "notFound": "Member not found",
     "confirmDelete": "Are you sure you want to delete this member?"
   },
@@ -51,5 +73,74 @@
     "CHILD": "Child",
     "SIBLING": "Sibling",
     "OTHER": "Other"
+  },
+  "health": {
+    "badge": "Health",
+    "titleLine1": "Care for",
+    "titleLine2": "Your Family",
+    "description": "Comprehensive health tracking and analysis for your entire family",
+    "comingSoon": "More features coming soon",
+    "records": {
+      "title": "Health Records",
+      "desc": "Track blood pressure, glucose and more"
+    },
+    "nutrition": {
+      "title": "Nutrition",
+      "desc": "Log meals and nutritional intake"
+    },
+    "medication": {
+      "title": "Medication",
+      "desc": "Smart reminders for medications"
+    },
+    "trends": {
+      "title": "Trends",
+      "desc": "Visualize health data trends"
+    }
+  },
+  "goals": {
+    "badge": "Goals",
+    "titleLine1": "Grow",
+    "titleLine2": "Together",
+    "description": "Set family goals, track progress, and witness every step of growth",
+    "comingSoon": "More features coming soon",
+    "setting": {
+      "title": "Goal Setting",
+      "desc": "Set personalized goals for each member"
+    },
+    "progress": {
+      "title": "Progress",
+      "desc": "Track goal completion in real-time"
+    },
+    "habits": {
+      "title": "Habits",
+      "desc": "Build positive daily habits"
+    },
+    "achievements": {
+      "title": "Achievements",
+      "desc": "Celebrate every milestone"
+    }
+  },
+  "devices": {
+    "badge": "Devices",
+    "titleLine1": "Smart",
+    "titleLine2": "Home",
+    "description": "Connect and manage smart devices for a comfortable, safe home",
+    "comingSoon": "More features coming soon",
+    "connect": {
+      "title": "Device Connect",
+      "desc": "Quick setup for smart devices"
+    },
+    "environment": {
+      "title": "Environment",
+      "desc": "Temperature, humidity & air quality"
+    },
+    "scenes": {
+      "title": "Scenes",
+      "desc": "Custom automation scenes"
+    },
+    "security": {
+      "title": "Security",
+      "desc": "Real-time home security monitoring"
+    }
   }
 }

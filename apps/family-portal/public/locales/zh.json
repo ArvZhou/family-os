@@ -7,19 +7,33 @@
     "error": "发生错误",
     "back": "返回",
     "create": "创建",
-    "edit": "编辑"
+    "edit": "编辑",
+    "comingSoon": "更多功能即将推出"
+  },
+  "nav": {
+    "brand": "Family OS",
+    "members": "家庭成员",
+    "health": "健康",
+    "goals": "目标",
+    "devices": "设备",
+    "switchToEn": "EN",
+    "switchToZh": "中文"
   },
   "auth": {
     "title": "Family OS",
     "subtitle": "登录你的家庭账户",
     "username": "用户名",
     "password": "密码",
+    "enterUsername": "输入用户名",
+    "enterPassword": "输入密码",
     "login": "登录",
     "loggingIn": "登录中...",
     "logout": "退出登录",
+    "enterCredentials": "请输入用户名和密码",
     "wrongPassword": "用户名或密码错误",
     "notVerified": "账号未验证，请先验证邮箱或手机号",
-    "loginFailed": "登录失败，请稍后重试"
+    "loginFailed": "登录失败，请稍后重试",
+    "footer": "家庭数字管理平台"
   },
   "dashboard": {
     "title": "家庭仪表板",
@@ -31,15 +45,23 @@
     "archive": "家庭档案"
   },
   "members": {
+    "heroTag": "家庭管理",
     "title": "家庭成员",
-    "description": "管理你的家庭成员信息",
+    "titleLine2": "",
+    "description": "管理你的家庭成员信息，记录家人的健康与生活",
     "add": "添加成员",
+    "addFirst": "添加第一位成员",
     "edit": "编辑成员",
     "empty": "暂无家庭成员",
-    "emptyHint": "点击上方按钮添加你的第一位家庭成员",
+    "emptyHint": "点击上方按钮添加你的第一位家庭成员，开始记录家人的健康与生活",
     "name": "姓名",
+    "enterName": "输入姓名",
     "birthday": "生日",
     "relation": "关系",
+    "basicInfo": "基本信息",
+    "more": "更多",
+    "avatar": "头像",
+    "noAvatar": "暂无头像",
     "detail": "成员详情",
     "backToList": "返回成员列表",
     "notFound": "成员不存在",
@@ -51,5 +73,74 @@
     "CHILD": "子女",
     "SIBLING": "兄弟姐妹",
     "OTHER": "其他"
+  },
+  "health": {
+    "badge": "健康管理",
+    "titleLine1": "关爱家人",
+    "titleLine2": "从健康开始",
+    "description": "全面记录和分析家人的健康数据，让关爱更有温度",
+    "comingSoon": "更多功能即将推出",
+    "records": {
+      "title": "健康记录",
+      "desc": "追踪血压、血糖等关键指标"
+    },
+    "nutrition": {
+      "title": "饮食管理",
+      "desc": "记录每日饮食与营养摄入"
+    },
+    "medication": {
+      "title": "用药提醒",
+      "desc": "智能提醒按时服药"
+    },
+    "trends": {
+      "title": "健康趋势",
+      "desc": "可视化分析健康数据变化"
+    }
+  },
+  "goals": {
+    "badge": "目标管理",
+    "titleLine1": "一起成长",
+    "titleLine2": "一起进步",
+    "description": "设定家庭目标，追踪进度，见证每一步成长",
+    "comingSoon": "更多功能即将推出",
+    "setting": {
+      "title": "目标设定",
+      "desc": "为每位家庭成员设定个性化目标"
+    },
+    "progress": {
+      "title": "进度追踪",
+      "desc": "实时查看目标完成进度"
+    },
+    "habits": {
+      "title": "习惯养成",
+      "desc": "培养良好的日常习惯"
+    },
+    "achievements": {
+      "title": "成就系统",
+      "desc": "记录每个值得庆祝的时刻"
+    }
+  },
+  "devices": {
+    "badge": "智能设备",
+    "titleLine1": "智慧家庭",
+    "titleLine2": "触手可及",
+    "description": "连接和管理你的智能家居设备，打造舒适安全的家",
+    "comingSoon": "更多功能即将推出",
+    "connect": {
+      "title": "设备连接",
+      "desc": "一键配网，快速连接智能设备"
+    },
+    "environment": {
+      "title": "环境监控",
+      "desc": "温度、湿度、空气质量监测"
+    },
+    "scenes": {
+      "title": "智能场景",
+      "desc": "自定义自动化场景联动"
+    },
+    "security": {
+      "title": "安全守护",
+      "desc": "实时监控家庭安全状态"
+    }
   }
 }
