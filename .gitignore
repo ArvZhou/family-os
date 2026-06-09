@@ -53,6 +53,7 @@ src/generated/
 apps/family-portal/src/generated/
 apps/family-service/src/generated/
 next-env.d.ts
+*.tsbuildinfo
 
 # Gradle
 .gradle/
