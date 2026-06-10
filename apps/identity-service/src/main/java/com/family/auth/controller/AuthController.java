@@ -33,9 +33,9 @@ public class AuthController {
             @ApiResponse(responseCode = "409", description = "Username already exists")
     })
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(@Valid @RequestBody CreateUserRequest request) {
-        UserResponse user = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody CreateUserRequest request) {
+        AuthResponse response = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Operation(summary = "Login with username and password")

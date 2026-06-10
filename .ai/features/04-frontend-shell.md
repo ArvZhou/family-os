@@ -9,6 +9,8 @@
 ## 用户可感知的交付
 
 - 访问网站看到登录页
+- 登录页底部有"注册"入口，可跳转到注册页
+- 注册页支持邮箱注册和手机号注册二选一，填写用户名、密码、确认密码、显示名称后创建账户，注册成功后自动登录
 - 输入用户名密码登录后进入主界面
 - 主界面左侧有导航栏（成员、健康、目标、设备）
 - "成员"页面展示家庭成员列表，可以添加/编辑/删除成员
@@ -19,7 +21,8 @@
 
 ```
 /                     → 重定向到 /members（已登录）或 /login
-/login                → 登录页
+/login                → 登录页（底部有注册入口）
+/register             → 注册页
 /members              → 成员列表
 /members/:id          → 成员详情
 /health               → 健康记录（feature 05）
@@ -40,7 +43,13 @@ RootLayout
 
 LoginPage
 ├── LoginForm (用户名 + 密码)
+├── RegisterLink (跳转 /register)
 └── SSOButton (Phase 5 启用)
+
+RegisterPage
+├── ModeToggle (邮箱注册 / 手机号注册 二选一)
+├── RegisterForm (用户名 + 显示名称 + 邮箱或手机号 + 密码 + 确认密码)
+└── LoginLink (跳转 /login)
 
 MemberListPage (Feature 04 交付)
 ├── MemberCard[] (头像 + 姓名 + 关系标签)
@@ -90,6 +99,24 @@ mutation Login($input: LoginInput!) {
       id
       name
       email
+    }
+  }
+}
+```
+
+### 注册
+
+```graphql
+mutation Register($input: RegisterInput!) {
+  register(input: $input) {
+    accessToken
+    refreshToken
+    expiresIn
+    user {
+      id
+      name
+      email
+      phone
     }
   }
 }
@@ -160,4 +187,18 @@ cd apps/family-portal && pnpm dev
 # 7. 语言切换
 # 点击语言切换按钮
 # 期望: 界面文字在中文/英文间切换
+
+# 8. 注册流程
+# 在登录页点击"注册"链接 → 跳转到 /register
+# 注册页顶部有"邮箱注册"和"手机号注册"切换按钮
+# 选择邮箱注册 → 填写用户名、显示名称、邮箱、密码、确认密码 → 提交
+# 选择手机号注册 → 填写用户名、显示名称、手机号、密码、确认密码 → 提交
+# 期望: 注册成功 → 自动登录 → 跳转到 /members
+# 密码不一致 → 显示错误提示
+# 用户名已存在 → 显示错误提示
+# 未填写必填字段 → 显示错误提示
+
+# 9. 登录页注册入口
+# 登录页表单底部有"没有账号？去注册"链接
+# 点击 → 跳转到 /register
 ```

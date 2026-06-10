@@ -25,6 +25,9 @@ public class Member {
     @TableField("relation_type")
     private String relationType;
 
+    @TableField("user_id")
+    private UUID userId;
+
     @TableField("avatar_url")
     private String avatarUrl;
 

@@ -11,6 +11,9 @@ export class User {
   @Field({ nullable: true, description: 'Email address' })
   email?: string;
 
+  @Field({ nullable: true, description: 'Phone number' })
+  phone?: string;
+
   @Field({ description: 'Display name' })
   name!: string;
 }

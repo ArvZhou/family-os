@@ -72,8 +72,17 @@ type Mutation {
   """Refresh access token"""
   refreshToken(input: RefreshTokenInput!): AuthPayload!
 
+  """Register a new account"""
+  register(input: RegisterInput!): AuthPayload!
+
+  """Resend verification code"""
+  resendCode(input: ResendCodeInput!): VerificationResult!
+
   """Update an existing family member"""
   updateMember(id: ID!, input: UpdateMemberInput!): Member!
+
+  """Verify account with code sent to email or phone"""
+  verify(input: VerifyInput!): VerificationResult!
 }
 
 type Query {
@@ -93,6 +102,24 @@ input RefreshTokenInput {
   refreshToken: String!
 }
 
+"""Registration input"""
+input RegisterInput {
+  """Email address"""
+  email: String
+
+  """Display name"""
+  name: String!
+
+  """Password"""
+  password: String!
+
+  """Phone number"""
+  phone: String
+
+  """Username"""
+  username: String!
+}
+
 """Family relationship type"""
 enum Relation {
   CHILD
@@ -100,6 +127,12 @@ enum Relation {
   PARENT
   SIBLING
   SPOUSE
+}
+
+"""Resend verification code"""
+input ResendCodeInput {
+  """Email or phone to resend code to"""
+  target: String!
 }
 
 """Input for updating a family member"""
@@ -128,6 +161,27 @@ type User {
   """Display name"""
   name: String!
 
+  """Phone number"""
+  phone: String
+
   """Username"""
   username: String!
+}
+
+"""Verification result"""
+type VerificationResult {
+  """Human-readable message"""
+  message: String!
+
+  """Whether the operation succeeded"""
+  success: Boolean!
+}
+
+"""Verify account with code"""
+input VerifyInput {
+  """6-digit verification code"""
+  code: String!
+
+  """Email or phone used during registration"""
+  target: String!
 }

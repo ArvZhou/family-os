@@ -11,7 +11,7 @@ export function Card({ children, className }: CardProps) {
   return (
     <div
       className={cn(
-        'rounded-3xl bg-white p-8 shadow-[0_4px_24px_rgba(0,0,0,0.04)] ring-1 ring-black/[0.03]',
+        'rounded-3xl bg-white p-8 shadow-[0_4px_24px_rgba(0,0,0,0.04)] ring-1 ring-black/3',
         className,
       )}
     >

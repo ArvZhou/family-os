@@ -30,7 +30,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public UserResponse register(CreateUserRequest request) {
+    public AuthResponse register(CreateUserRequest request) {
         // Determine verification target: email takes priority, then phone
         String target = resolveTarget(request);
         if (target == null) {
@@ -42,6 +42,15 @@ public class AuthServiceImpl implements AuthService {
         query.eq(User::getUsername, request.username());
         if (userMapper.selectCount(query) > 0) {
             throw new DuplicateUsernameException(request.username());
+        }
+
+        // Check duplicate email
+        if (request.email() != null && !request.email().isBlank()) {
+            LambdaQueryWrapper<User> emailQuery = new LambdaQueryWrapper<>();
+            emailQuery.eq(User::getEmail, request.email());
+            if (userMapper.selectCount(emailQuery) > 0) {
+                throw new DuplicateEmailException(request.email());
+            }
         }
 
         User user = new User();
@@ -57,7 +66,11 @@ public class AuthServiceImpl implements AuthService {
         // Send verification code
         verificationService.sendCode(target);
 
-        return toResponse(user);
+        // Generate tokens so the user is logged in immediately after registration
+        String accessToken = jwtService.generateAccessToken(user.getId(), user.getUsername());
+        String refreshToken = jwtService.generateRefreshToken(user.getId());
+
+        return new AuthResponse(accessToken, refreshToken, 1800, toResponse(user));
     }
 
     @Override
@@ -156,6 +169,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private UserResponse toResponse(User user) {
-        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getName());
+        return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getPhone(), user.getName());
     }
 }

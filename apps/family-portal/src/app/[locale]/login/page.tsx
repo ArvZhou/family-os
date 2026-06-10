@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation } from '@apollo/client';
-import { useRouter } from '@/i18n/routing';
+import { useRouter, Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { LOGIN } from '@/graphql/operations';
 import { useAuthStore } from '@/stores/auth.store';
@@ -10,10 +10,12 @@ import { Button } from '@/components/ui/button';
 
 export default function LoginPage() {
   const t = useTranslations('auth');
+  const tVerify = useTranslations('verify');
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [notVerified, setNotVerified] = useState(false);
 
   const [loginMutation, { loading }] = useMutation(LOGIN, {
     onCompleted: (data) => {
@@ -25,9 +27,16 @@ export default function LoginPage() {
     },
     onError: (err) => {
       const code = (err.graphQLErrors?.[0]?.extensions as any)?.code;
-      if (code === 'UNAUTHORIZED') setError(t('wrongPassword'));
-      else if (code === 'ACCOUNT_NOT_VERIFIED') setError(t('notVerified'));
-      else setError(t('loginFailed'));
+      if (code === 'UNAUTHORIZED') {
+        setError(t('wrongPassword'));
+        setNotVerified(false);
+      } else if (code === 'ACCOUNT_NOT_VERIFIED') {
+        setError(t('notVerified'));
+        setNotVerified(true);
+      } else {
+        setError(t('loginFailed'));
+        setNotVerified(false);
+      }
     },
   });
 
@@ -93,12 +102,31 @@ export default function LoginPage() {
                 className="flex h-11 w-full rounded-xl bg-[#f5f5f7] px-4 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] ring-1 ring-inset ring-[#d2d2d7] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#0071e3] focus:bg-white"
               />
             </div>
-            {error && <p className="text-center text-[13px] text-[#ff3b30]">{error}</p>}
+            {error && (
+              <div className="text-center">
+                <p className="text-[13px] text-[#ff3b30]">{error}</p>
+                {notVerified && (
+                  <Link
+                    href={`/verify?target=${encodeURIComponent('')}`}
+                    className="mt-1.5 inline-block text-[13px] text-[#0071e3] hover:underline"
+                  >
+                    {tVerify('backToVerify')}
+                  </Link>
+                )}
+              </div>
+            )}
             <Button type="submit" className="w-full" size="lg" disabled={loading}>
               {loading ? t('loggingIn') : t('login')}
             </Button>
           </form>
         </div>
+
+        <p className="mt-6 text-center text-[14px] text-[#86868b]">
+          {t('noAccount')}{' '}
+          <Link href="/register" className="text-[#0071e3] hover:underline">
+            {t('goRegister')}
+          </Link>
+        </p>
       </div>
     </div>
   );

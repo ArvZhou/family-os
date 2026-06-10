@@ -6,13 +6,13 @@ import java.util.UUID;
 
 public interface MemberService {
 
-    List<MemberResponse> findAll();
+    List<MemberResponse> findAll(UUID userId);
 
-    MemberResponse findById(UUID id);
+    MemberResponse findById(UUID userId, UUID id);
 
-    MemberResponse create(CreateMemberRequest request);
+    MemberResponse create(UUID userId, CreateMemberRequest request);
 
-    MemberResponse update(UUID id, UpdateMemberRequest request);
+    MemberResponse update(UUID userId, UUID id, UpdateMemberRequest request);
 
-    void delete(UUID id);
+    void delete(UUID userId, UUID id);
 }

@@ -15,6 +15,22 @@ export const LOGIN = gql`
   }
 `;
 
+export const REGISTER = gql`
+  mutation Register($input: RegisterInput!) {
+    register(input: $input) {
+      accessToken
+      refreshToken
+      expiresIn
+      user {
+        id
+        name
+        email
+        phone
+      }
+    }
+  }
+`;
+
 export const REFRESH_TOKEN = gql`
   mutation RefreshToken($input: RefreshTokenInput!) {
     refreshToken(input: $input) {
@@ -76,5 +92,23 @@ export const UPDATE_MEMBER = gql`
 export const DELETE_MEMBER = gql`
   mutation DeleteMember($id: ID!) {
     deleteMember(id: $id)
+  }
+`;
+
+export const VERIFY = gql`
+  mutation Verify($input: VerifyInput!) {
+    verify(input: $input) {
+      success
+      message
+    }
+  }
+`;
+
+export const RESEND_CODE = gql`
+  mutation ResendCode($input: ResendCodeInput!) {
+    resendCode(input: $input) {
+      success
+      message
+    }
   }
 `;

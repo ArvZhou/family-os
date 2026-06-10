@@ -25,8 +25,10 @@ export default function middleware(request: NextRequest) {
   // (Skip for login page itself)
   const locale = pathname.split('/')[1];
   const isLoginPage = pathname === `/${locale}/login` || pathname === '/login';
+  const isRegisterPage = pathname === `/${locale}/register` || pathname === '/register';
+  const isVerifyPage = pathname === `/${locale}/verify` || pathname === '/verify';
 
-  if (!isLoginPage) {
+  if (!isLoginPage && !isRegisterPage && !isVerifyPage) {
     const hasRefreshToken = request.cookies.get('refreshToken')?.value;
     if (!hasRefreshToken) {
       const loginUrl = new URL(`/${locale || routing.defaultLocale}/login`, request.url);

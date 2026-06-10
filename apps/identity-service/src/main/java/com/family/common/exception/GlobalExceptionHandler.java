@@ -1,10 +1,13 @@
 package com.family.common.exception;
 
 import com.family.auth.exception.AccountNotVerifiedException;
+import com.family.auth.exception.DuplicateEmailException;
 import com.family.auth.exception.DuplicateUsernameException;
 import com.family.auth.exception.InvalidCredentialsException;
 import com.family.auth.exception.VerificationCodeInvalidException;
 import com.family.auth.verification.VerificationCodeCooldownException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -16,6 +19,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(EntityNotFoundException ex) {
@@ -60,6 +65,12 @@ public class GlobalExceptionHandler {
                 .body(Map.of("code", "CONFLICT", "message", ex.getMessage()));
     }
 
+    @ExceptionHandler(DuplicateEmailException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateEmail(DuplicateEmailException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("code", "CONFLICT", "message", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         List<String> errors = ex.getBindingResult().getFieldErrors().stream()
@@ -71,6 +82,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
+        log.error("Unhandled exception", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("code", "INTERNAL_ERROR", "message", "An unexpected error occurred"));
     }

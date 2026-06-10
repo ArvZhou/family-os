@@ -60,6 +60,9 @@ dependencies {
     // SpringDoc OpenAPI
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocVersion")
 
+    // Mail (SMTP)
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+
     // Lombok
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")

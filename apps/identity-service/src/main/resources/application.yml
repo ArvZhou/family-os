@@ -26,6 +26,21 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  # SMTP mail (used when sms.provider=smtp)
+  mail:
+    host: ${MAIL_HOST:smtp.qq.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
 # MyBatis-Plus
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
@@ -60,10 +75,6 @@ jwt:
 # SMS / Email Verification — provider configuration
 sms:
   provider: ${SMS_PROVIDER:console} # console | aliyun | twilio | smtp
-  api-key: ${SMS_API_KEY:}
-  api-secret: ${SMS_API_SECRET:}
-  sign-name: ${SMS_SIGN_NAME:FamilyOS}
-  template-code: ${SMS_TEMPLATE_CODE:}
 
 # SSO (OAuth2/OIDC) — reserved
 sso:

@@ -1,5 +1,6 @@
 package com.family.member.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.family.common.exception.EntityNotFoundException;
 import com.family.member.dto.*;
 import com.family.member.entity.Member;
@@ -21,28 +22,28 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public List<MemberResponse> findAll() {
-        List<Member> members = memberMapper.selectList(null);
+    public List<MemberResponse> findAll(UUID userId) {
+        LambdaQueryWrapper<Member> query = new LambdaQueryWrapper<>();
+        query.eq(Member::getUserId, userId);
+        List<Member> members = memberMapper.selectList(query);
         return members.stream().map(this::toResponse).toList();
     }
 
     @Override
-    public MemberResponse findById(UUID id) {
-        Member member = memberMapper.selectById(id);
-        if (member == null) {
-            throw new EntityNotFoundException("Member", id);
-        }
+    public MemberResponse findById(UUID userId, UUID id) {
+        Member member = findOwned(userId, id);
         return toResponse(member);
     }
 
     @Override
-    public MemberResponse create(CreateMemberRequest request) {
+    public MemberResponse create(UUID userId, CreateMemberRequest request) {
         validateName(request.name());
         validateBirthday(request.birthday());
         validateRelationType(request.relationType());
 
         Member member = new Member();
         member.setId(UUID.randomUUID());
+        member.setUserId(userId);
         member.setName(request.name().trim());
         member.setBirthday(request.birthday());
         member.setRelationType(request.relationType().toUpperCase());
@@ -52,11 +53,8 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public MemberResponse update(UUID id, UpdateMemberRequest request) {
-        Member member = memberMapper.selectById(id);
-        if (member == null) {
-            throw new EntityNotFoundException("Member", id);
-        }
+    public MemberResponse update(UUID userId, UUID id, UpdateMemberRequest request) {
+        Member member = findOwned(userId, id);
 
         if (request.name() != null) {
             validateName(request.name());
@@ -79,12 +77,23 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public void delete(UUID id) {
-        Member member = memberMapper.selectById(id);
+    public void delete(UUID userId, UUID id) {
+        Member member = findOwned(userId, id);
+        memberMapper.deleteById(member.getId());
+    }
+
+    /**
+     * Find a member by id and verify it belongs to the given user.
+     */
+    private Member findOwned(UUID userId, UUID id) {
+        LambdaQueryWrapper<Member> query = new LambdaQueryWrapper<>();
+        query.eq(Member::getId, id)
+             .eq(Member::getUserId, userId);
+        Member member = memberMapper.selectOne(query);
         if (member == null) {
             throw new EntityNotFoundException("Member", id);
         }
-        memberMapper.deleteById(id);
+        return member;
     }
 
     private void validateName(String name) {

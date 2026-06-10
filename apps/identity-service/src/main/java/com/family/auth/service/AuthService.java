@@ -4,7 +4,7 @@ import com.family.auth.dto.*;
 
 public interface AuthService {
 
-    UserResponse register(CreateUserRequest request);
+    AuthResponse register(CreateUserRequest request);
 
     AuthResponse login(LoginRequest request);
 
