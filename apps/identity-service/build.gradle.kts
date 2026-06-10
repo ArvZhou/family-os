@@ -6,6 +6,7 @@ buildscript {
     dependencies {
         classpath("org.flywaydb:flyway-core:11.5.0")
         classpath("org.flywaydb:flyway-database-postgresql:11.5.0")
+        classpath("org.postgresql:postgresql:42.7.4")
     }
 }
 
@@ -102,18 +103,26 @@ tasks.register("flywayMigrate") {
     description = "Run Flyway database migrations"
 
     doLast {
-        val dbHost = System.getenv("DB_HOST") ?: dotEnv["DB_HOST"] ?: "localhost"
-        val dbPort = System.getenv("DB_PORT") ?: dotEnv["DB_PORT"] ?: "5432"
-        val dbName = System.getenv("DB_NAME") ?: dotEnv["DB_NAME"] ?: "family_os"
-        val dbUser = System.getenv("DB_USER") ?: dotEnv["DB_USER"] ?: "family_user"
-        val dbPassword = System.getenv("DB_PASSWORD") ?: dotEnv["DB_PASSWORD"] ?: ""
+        fun env(key: String): String? = System.getenv(key)?.takeIf { it.isNotBlank() }
+        val dbHost = env("DB_HOST") ?: dotEnv["DB_HOST"] ?: "localhost"
+        val dbPort = env("DB_PORT") ?: dotEnv["DB_PORT"] ?: "5432"
+        val dbName = env("DB_NAME") ?: dotEnv["DB_NAME"] ?: "family_os"
+        val dbUser = env("DB_USER") ?: dotEnv["DB_USER"] ?: "family_user"
+        val dbPassword = env("DB_PASSWORD") ?: dotEnv["DB_PASSWORD"] ?: ""
 
         val url = "jdbc:postgresql://${dbHost}:${dbPort}/${dbName}"
         logger.lifecycle("Flyway: migrating $url ...")
 
+        val ds = org.postgresql.ds.PGSimpleDataSource()
+        ds.serverNames = arrayOf(dbHost)
+        ds.portNumbers = intArrayOf(dbPort.toInt())
+        ds.databaseName = dbName
+        ds.user = dbUser
+        ds.password = dbPassword
+
         val flyway = org.flywaydb.core.Flyway.configure()
-            .dataSource(url, dbUser, dbPassword)
-            .locations("filesystem:src/main/resources/db/migration")
+            .dataSource(ds)
+            .locations("filesystem:${projectDir}/src/main/resources/db/migration")
             .load()
 
         val result = flyway.migrate()
