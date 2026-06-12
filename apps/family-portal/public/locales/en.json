@@ -108,7 +108,8 @@
     "detail": "Member Detail",
     "backToList": "Back to Members",
     "notFound": "Member not found",
-    "confirmDelete": "Are you sure you want to delete this member?"
+    "confirmDelete": "Are you sure you want to delete this member?",
+    "healthRecords": "Health Records"
   },
   "relation": {
     "SPOUSE": "Spouse",
@@ -118,26 +119,43 @@
     "OTHER": "Other"
   },
   "health": {
-    "badge": "Health",
-    "titleLine1": "Care for",
-    "titleLine2": "Your Family",
-    "description": "Comprehensive health tracking and analysis for your entire family",
-    "comingSoon": "More features coming soon",
-    "records": {
-      "title": "Health Records",
-      "desc": "Track blood pressure, glucose and more"
+    "badge": "Health Management",
+    "titleLine1": "Track Family",
+    "titleLine2": "Health Changes",
+    "description": "Log blood pressure, blood sugar, weight, and temperature, then review trends and history.",
+    "panelTitle": "Add Health Record",
+    "panelDesc": "Choose a family member and metric type, then fill in the matching values.",
+    "refresh": "Refresh",
+    "member": "Member",
+    "selectMember": "Select a member",
+    "selectMemberHint": "Please select a family member first",
+    "type": "Record Type",
+    "recordedAt": "Recorded At",
+    "unit": "Unit",
+    "unitPlaceholder": "e.g. mmHg / mmol/L / kg / °C",
+    "systolic": "Systolic",
+    "diastolic": "Diastolic",
+    "glucose": "Glucose",
+    "weight": "Weight",
+    "temperature": "Temperature",
+    "notes": "Notes",
+    "notesPlaceholder": "Optional notes",
+    "addRecord": "Save Record",
+    "trendTitle": "Health Trend",
+    "recordList": "Record History",
+    "trendEmpty": "No trend data yet",
+    "recordsEmpty": "No health records yet",
+    "types": {
+      "BLOOD_PRESSURE": "Blood Pressure",
+      "BLOOD_SUGAR": "Blood Sugar",
+      "WEIGHT": "Weight",
+      "TEMPERATURE": "Temperature",
+      "OTHER": "Other"
     },
-    "nutrition": {
-      "title": "Nutrition",
-      "desc": "Log meals and nutritional intake"
-    },
-    "medication": {
-      "title": "Medication",
-      "desc": "Smart reminders for medications"
-    },
-    "trends": {
-      "title": "Trends",
-      "desc": "Visualize health data trends"
+    "periods": {
+      "D7": "Last 7 Days",
+      "D30": "Last 30 Days",
+      "D90": "Last 90 Days"
     }
   },
   "goals": {

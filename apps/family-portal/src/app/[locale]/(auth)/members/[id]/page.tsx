@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { GET_MEMBER } from '@/graphql/operations';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, User } from 'lucide-react';
+import { ArrowLeft, Calendar, Heart, User } from 'lucide-react';
 
 const RELATION_CONFIG: Record<string, { color: string }> = {
   SPOUSE: { color: '#ff2d55' },
@@ -50,13 +50,22 @@ export default function MemberDetailPage() {
 
   return (
     <div className="space-y-10 animate-fade-in-up">
-      <Link
-        href="/members"
-        className="inline-flex items-center gap-1.5 text-[15px] text-[#0071e3] transition-colors hover:text-[#0077ed] hover:underline"
-      >
-        <ArrowLeft size={16} />
-        {t('backToList')}
-      </Link>
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href="/members"
+          className="inline-flex items-center gap-1.5 text-[15px] text-[#0071e3] transition-colors hover:text-[#0077ed] hover:underline"
+        >
+          <ArrowLeft size={16} />
+          {t('backToList')}
+        </Link>
+        <Link
+          href={`/health?memberId=${member.id}`}
+          className="inline-flex items-center gap-1.5 text-[15px] text-[#0071e3] transition-colors hover:text-[#0077ed] hover:underline"
+        >
+          <Heart size={16} />
+          {t('healthRecords')}
+        </Link>
+      </div>
 
       <div className="relative overflow-hidden rounded-[20px] bg-[#1d1d1f] p-10 sm:p-14">
         <div

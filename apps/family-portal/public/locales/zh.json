@@ -108,7 +108,8 @@
     "detail": "成员详情",
     "backToList": "返回成员列表",
     "notFound": "成员不存在",
-    "confirmDelete": "确定要删除该成员吗？"
+    "confirmDelete": "确定要删除该成员吗？",
+    "healthRecords": "健康记录"
   },
   "relation": {
     "SPOUSE": "配偶",
@@ -119,25 +120,42 @@
   },
   "health": {
     "badge": "健康管理",
-    "titleLine1": "关爱家人",
-    "titleLine2": "从健康开始",
-    "description": "全面记录和分析家人的健康数据，让关爱更有温度",
-    "comingSoon": "更多功能即将推出",
-    "records": {
-      "title": "健康记录",
-      "desc": "追踪血压、血糖等关键指标"
+    "titleLine1": "记录家人",
+    "titleLine2": "健康变化",
+    "description": "记录血压、血糖、体重和体温，查看趋势和历史记录。",
+    "panelTitle": "新增健康记录",
+    "panelDesc": "先选择家庭成员和指标类型，再填写对应数值。",
+    "refresh": "刷新",
+    "member": "家庭成员",
+    "selectMember": "请选择成员",
+    "selectMemberHint": "请先选择一个家庭成员",
+    "type": "记录类型",
+    "recordedAt": "记录时间",
+    "unit": "单位",
+    "unitPlaceholder": "例如 mmHg / mmol/L / kg / °C",
+    "systolic": "收缩压",
+    "diastolic": "舒张压",
+    "glucose": "血糖",
+    "weight": "体重",
+    "temperature": "体温",
+    "notes": "备注",
+    "notesPlaceholder": "可选备注",
+    "addRecord": "保存记录",
+    "trendTitle": "健康趋势",
+    "recordList": "历史记录",
+    "trendEmpty": "暂无趋势数据",
+    "recordsEmpty": "暂无健康记录",
+    "types": {
+      "BLOOD_PRESSURE": "血压",
+      "BLOOD_SUGAR": "血糖",
+      "WEIGHT": "体重",
+      "TEMPERATURE": "体温",
+      "OTHER": "其他"
     },
-    "nutrition": {
-      "title": "饮食管理",
-      "desc": "记录每日饮食与营养摄入"
-    },
-    "medication": {
-      "title": "用药提醒",
-      "desc": "智能提醒按时服药"
-    },
-    "trends": {
-      "title": "健康趋势",
-      "desc": "可视化分析健康数据变化"
+    "periods": {
+      "D7": "最近 7 天",
+      "D30": "最近 30 天",
+      "D90": "最近 90 天"
     }
   },
   "goals": {

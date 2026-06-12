@@ -17,6 +17,21 @@ type AuthPayload {
   user: User!
 }
 
+"""Input for creating a health record."""
+input CreateHealthRecordInput {
+  """Associated family member identifier."""
+  memberId: ID!
+
+  """Record timestamp in ISO 8601 format."""
+  recordedAt: String
+
+  """Metric category."""
+  type: HealthRecordType!
+
+  """Structured measurement values."""
+  values: HealthRecordValuesInput!
+}
+
 """Input for creating a family member"""
 input CreateMemberInput {
   """Avatar URL"""
@@ -31,6 +46,186 @@ input CreateMemberInput {
   """Relationship type"""
   relation: Relation!
 }
+
+"""ISO-8601 date string (YYYY-MM-DD)"""
+scalar Date
+
+"""ISO-8601 date-time string"""
+scalar DateTime
+
+"""A single health record."""
+type HealthRecord {
+  """Creation timestamp in ISO 8601 format."""
+  createdAt: String!
+
+  """Unique identifier."""
+  id: ID!
+
+  """Associated family member identifier."""
+  memberId: ID!
+
+  """Record timestamp in ISO 8601 format."""
+  recordedAt: String!
+
+  """Metric category."""
+  type: HealthRecordType!
+
+  """Structured measurement values."""
+  values: HealthRecordValues!
+}
+
+"""Paginated health record connection."""
+type HealthRecordConnection {
+  """Paginated record edges."""
+  edges: [HealthRecordEdge!]!
+
+  """Pagination metadata."""
+  pageInfo: PageInfo!
+
+  """Total matching records."""
+  totalCount: Int!
+}
+
+"""Health record edge for cursor pagination."""
+type HealthRecordEdge {
+  """Opaque cursor for pagination."""
+  cursor: String!
+
+  """Health record node."""
+  node: HealthRecord!
+}
+
+"""Filters for listing health records."""
+input HealthRecordListInput {
+  """Opaque cursor of the last seen record."""
+  after: String
+
+  """Number of records to fetch."""
+  first: Int
+
+  """Associated family member identifier."""
+  memberId: ID!
+
+  """Optional metric category filter."""
+  type: HealthRecordType
+}
+
+"""Health metric category."""
+enum HealthRecordType {
+  BLOOD_PRESSURE
+  BLOOD_SUGAR
+  OTHER
+  TEMPERATURE
+  WEIGHT
+}
+
+"""Structured values for a health record."""
+type HealthRecordValues {
+  """Diastolic pressure in mmHg."""
+  diastolic: Float
+
+  """Blood glucose value."""
+  glucose: Float
+
+  """Optional notes."""
+  notes: String
+
+  """Systolic pressure in mmHg."""
+  systolic: Float
+
+  """Body temperature."""
+  temperature: Float
+
+  """Measurement unit."""
+  unit: String
+
+  """Body weight."""
+  weight: Float
+}
+
+"""Structured values for a health record."""
+input HealthRecordValuesInput {
+  """Diastolic pressure in mmHg."""
+  diastolic: Float
+
+  """Blood glucose value."""
+  glucose: Float
+
+  """Optional notes."""
+  notes: String
+
+  """Systolic pressure in mmHg."""
+  systolic: Float
+
+  """Body temperature."""
+  temperature: Float
+
+  """Measurement unit."""
+  unit: String
+
+  """Body weight."""
+  weight: Float
+}
+
+"""Trend data for a health metric."""
+type HealthTrend {
+  """Average numeric value across the trend."""
+  averageValue: Float
+
+  """Number of data points in the trend."""
+  count: Int!
+
+  """Maximum numeric value across the trend."""
+  maxValue: Float
+
+  """Associated family member identifier."""
+  memberId: ID!
+
+  """Minimum numeric value across the trend."""
+  minValue: Float
+
+  """Requested time window."""
+  period: TrendPeriod!
+
+  """Trend points ordered by time."""
+  points: [HealthTrendPoint!]!
+
+  """Metric category."""
+  type: HealthRecordType!
+}
+
+"""Filters for health trend queries."""
+input HealthTrendInput {
+  """Associated family member identifier."""
+  memberId: ID!
+
+  """Requested time window."""
+  period: TrendPeriod!
+
+  """Metric category."""
+  type: HealthRecordType!
+}
+
+"""A single point in a health trend series."""
+type HealthTrendPoint {
+  """Point label suitable for chart axes."""
+  label: String!
+
+  """Original record timestamp in ISO 8601 format."""
+  recordedAt: String!
+
+  """Metric category."""
+  type: HealthRecordType!
+
+  """Numeric value used in charts."""
+  value: Float!
+
+  """Structured measurement values."""
+  values: HealthRecordValues!
+}
+
+"""Arbitrary JSON value"""
+scalar JSON
 
 """Login credentials"""
 input LoginInput {
@@ -60,6 +255,9 @@ type Member {
 }
 
 type Mutation {
+  """Create a new health record."""
+  createHealthRecord(input: CreateHealthRecordInput!): HealthRecord!
+
   """Create a new family member"""
   createMember(input: CreateMemberInput!): Member!
 
@@ -85,15 +283,36 @@ type Mutation {
   verify(input: VerifyInput!): VerificationResult!
 }
 
+"""Pagination state for health record queries."""
+type PageInfo {
+  """Cursor for the last item in the current window."""
+  endCursor: String
+
+  """Whether more pages exist after the current window."""
+  hasNextPage: Boolean!
+
+  """Whether previous pages exist before the current window."""
+  hasPreviousPage: Boolean!
+
+  """Cursor for the first item in the current window."""
+  startCursor: String
+}
+
 type Query {
+  """Get a single health record by ID."""
+  healthRecord(id: String!): HealthRecord
+
+  """List health records for one family member."""
+  healthRecords(input: HealthRecordListInput!): HealthRecordConnection!
+
+  """Get trend data for a family member and health metric."""
+  healthTrend(input: HealthTrendInput!): HealthTrend!
+
   """Get a single member by ID"""
   member(id: ID!): Member
 
   """List all family members"""
   members: [Member!]!
-
-  """Returns a lightweight health check response."""
-  ping: String!
 }
 
 """Refresh token input"""
@@ -133,6 +352,13 @@ enum Relation {
 input ResendCodeInput {
   """Email or phone to resend code to"""
   target: String!
+}
+
+"""Rolling time window used for health trend queries."""
+enum TrendPeriod {
+  D7
+  D30
+  D90
 }
 
 """Input for updating a family member"""

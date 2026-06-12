@@ -5,6 +5,9 @@ import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { join } from 'path';
 
+import { DateScalar } from './common/scalars/date.scalar';
+import { DateTimeScalar } from './common/scalars/date-time.scalar';
+import { JsonScalar } from './common/scalars/json.scalar';
 import { HealthModule } from './modules/health/health.module';
 import { MemberModule } from './modules/member/member.module';
 import { GoalModule } from './modules/goal/goal.module';
@@ -25,7 +28,7 @@ import { NotificationModule } from './modules/notification/notification.module';
       sortSchema: true,
       playground: process.env.NODE_ENV !== 'production',
       introspection: process.env.NODE_ENV !== 'production',
-      context: ({ req }: { req: any }) => ({ req }),
+      context: ({ req }: { req: Request }) => ({ req }),
       subscriptions: {
         'graphql-ws': true,
       },
@@ -40,5 +43,6 @@ import { NotificationModule } from './modules/notification/notification.module';
     AiModule,
     NotificationModule,
   ],
+  providers: [DateScalar, DateTimeScalar, JsonScalar],
 })
 export class AppModule {}

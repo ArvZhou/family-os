@@ -5,6 +5,11 @@
 
 services:
   # --- PostgreSQL ---
+  # Architecture: single cluster, separate schemas per service.
+  # - identity-service owns the `public` schema (users, members, devices, permissions).
+  # - family-service (future) should use a dedicated schema (e.g. `family_service`)
+  #   with its own Flyway migrations — never access identity-service tables directly.
+  # cross-service communication: REST API only, never direct DB queries.
   postgres:
     image: postgres:16-alpine
     container_name: family-os-postgres

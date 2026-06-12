@@ -112,3 +112,86 @@ export const RESEND_CODE = gql`
     }
   }
 `;
+
+export const GET_HEALTH_RECORDS = gql`
+  query GetHealthRecords($input: HealthRecordListInput!) {
+    healthRecords(input: $input) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      edges {
+        cursor
+        node {
+          id
+          memberId
+          type
+          recordedAt
+          createdAt
+          values {
+            systolic
+            diastolic
+            glucose
+            weight
+            temperature
+            unit
+            notes
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const GET_HEALTH_TREND = gql`
+  query GetHealthTrend($input: HealthTrendInput!) {
+    healthTrend(input: $input) {
+      memberId
+      type
+      period
+      count
+      minValue
+      maxValue
+      averageValue
+      points {
+        label
+        value
+        recordedAt
+        type
+        values {
+          systolic
+          diastolic
+          glucose
+          weight
+          temperature
+          unit
+          notes
+        }
+      }
+    }
+  }
+`;
+
+export const CREATE_HEALTH_RECORD = gql`
+  mutation CreateHealthRecord($input: CreateHealthRecordInput!) {
+    createHealthRecord(input: $input) {
+      id
+      memberId
+      type
+      recordedAt
+      createdAt
+      values {
+        systolic
+        diastolic
+        glucose
+        weight
+        temperature
+        unit
+        notes
+      }
+    }
+  }
+`;
