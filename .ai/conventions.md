@@ -69,9 +69,11 @@ PostgreSQL
 
 Each service owns its data. Avoid direct modification from other services:
 
-- **Spring Boot** owns: users, permissions, device registry, member base data.
-- **NestJS** owns: health records, goals, automation rules, AI analysis cache, IoT state.
+- **Spring Boot (identity-service)** currently owns: users, authentication, permissions, family members, and device registry. In the current codebase, this includes `AuthController`, `MemberController`, `DeviceController`, and `PermissionController`.
+- **NestJS (family-service)** serves as the **GraphQL aggregation and business orchestration layer**. It proxies identity/core data from Spring Boot via REST and owns its own domain data (health records, goals, automation rules, AI analysis cache, IoT state — these domains are partially implemented or planned).
 - NestJS communicates with Spring Boot via REST API — never direct DB writes.
+
+> **Note:** The data ownership split described here is the target architecture. In the current implementation, identity-service is the most fully realized service; family-service implements auth and member proxying with additional domains in progress.
 
 ---
 

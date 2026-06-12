@@ -34,9 +34,11 @@ PostgreSQL
 
 ## GraphQL Standards
 
+> **Current Implementation Status (2026-06):** This document describes the **target** GraphQL API standards. The current `apps/family-service` implementation uses a **code-first** approach (not schema-first), and the schema currently includes only `Auth` (login, refreshToken), `Member` (CRUD), and a `ping` query. Relay-style pagination, subscriptions, and production introspection controls are not yet implemented. Refer to [03-graphql-gateway](./features/03-graphql-gateway.md) for the current state.
+
 ### Design Principles
 
-- **Schema-first**: define the schema before implementing resolvers.
+- **Schema-first** (target): define the schema before implementing resolvers. Current implementation is code-first via `@nestjs/graphql`.
 - Use `type Query` for reads, `type Mutation` for writes, `type Subscription` for real-time.
 - Follow **Relay specification** for pagination (connections, edges, cursors).
 - Use **enums** for fixed sets of values instead of strings.
@@ -145,8 +147,8 @@ type Member {
 ### Introspection & Playground
 
 - **Development**: GraphQL Playground enabled at `/graphql`.
-- **Production**: introspection disabled by default; expose via separate admin endpoint if needed.
-- Schema must be exported as `schema.graphql` for code generation.
+- **Production**: introspection should be disabled by default (target; not yet enforced in current implementation).
+- Schema is auto-generated via code-first (`autoSchemaFile: schema.graphql`) for frontend code generation.
 
 ---
 
@@ -256,10 +258,10 @@ All REST APIs **must** generate OpenAPI 3.0 documentation automatically:
 
 ### GraphQL — Schema & Playground
 
-- Schema file exported as `schema.graphql` at build time.
+- Schema file auto-generated at build time via NestJS code-first (`autoSchemaFile: schema.graphql`).
 - GraphQL Playground at `/graphql` (development only).
-- Introspection enabled in development, disabled in production.
-- Use code generation (`graphql-codegen`) to produce TypeScript types from the schema.
+- Introspection enabled in development; should be disabled in production (target).
+- Use code generation (`graphql-codegen`) to produce TypeScript types from the schema. See [frontend.md](./frontend.md) for the actual `codegen.ts` configuration.
 
 ---
 

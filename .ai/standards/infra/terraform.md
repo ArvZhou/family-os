@@ -1,5 +1,7 @@
 # Terraform — Infrastructure as Code Standards
 
+> **⚠️ Future / Planning:** There is currently no `infra/terraform/` directory in the repository. This document describes the target standard for when Terraform is introduced. Do not attempt to locate Terraform configurations — they do not exist yet.
+>
 > Framework-agnostic conventions for provisioning cloud infrastructure with Terraform.
 > For general deployment standards, see [../../deployment.md](../../deployment.md).
 
@@ -67,8 +69,8 @@ infra/
 
 ### Primary Provider
 
-| Provider | Purpose |
-|----------|---------|
+| Provider                               | Purpose                               |
+| -------------------------------------- | ------------------------------------- |
 | **Cloud provider** (AWS / GCP / Azure) | Compute, networking, managed services |
 
 Family OS is designed to be cloud-agnostic. Choose one primary cloud provider per deployment. The Terraform modules abstract provider-specific resources behind a consistent interface.
@@ -77,27 +79,27 @@ Family OS is designed to be cloud-agnostic. Choose one primary cloud provider pe
 
 AWS is the default recommendation for its mature service ecosystem:
 
-| Resource | AWS Service |
-|----------|-------------|
-| Kubernetes | EKS (Elastic Kubernetes Service) |
-| PostgreSQL | RDS for PostgreSQL |
-| Redis | ElastiCache for Redis |
-| Object Storage | S3 |
-| DNS | Route 53 |
-| SSL Certificates | ACM (AWS Certificate Manager) |
-| Secrets | Secrets Manager |
-| CDN | CloudFront |
+| Resource         | AWS Service                      |
+| ---------------- | -------------------------------- |
+| Kubernetes       | EKS (Elastic Kubernetes Service) |
+| PostgreSQL       | RDS for PostgreSQL               |
+| Redis            | ElastiCache for Redis            |
+| Object Storage   | S3                               |
+| DNS              | Route 53                         |
+| SSL Certificates | ACM (AWS Certificate Manager)    |
+| Secrets          | Secrets Manager                  |
+| CDN              | CloudFront                       |
 
 ### Alternative Providers
 
-| Resource | GCP | Azure |
-|----------|-----|-------|
-| Kubernetes | GKE (Google Kubernetes Engine) | AKS (Azure Kubernetes Service) |
-| PostgreSQL | Cloud SQL for PostgreSQL | Azure Database for PostgreSQL |
-| Redis | Memorystore for Redis | Azure Cache for Redis |
-| Object Storage | Cloud Storage | Blob Storage |
-| DNS | Cloud DNS | Azure DNS |
-| SSL / Secrets | Secret Manager | Key Vault |
+| Resource       | GCP                            | Azure                          |
+| -------------- | ------------------------------ | ------------------------------ |
+| Kubernetes     | GKE (Google Kubernetes Engine) | AKS (Azure Kubernetes Service) |
+| PostgreSQL     | Cloud SQL for PostgreSQL       | Azure Database for PostgreSQL  |
+| Redis          | Memorystore for Redis          | Azure Cache for Redis          |
+| Object Storage | Cloud Storage                  | Blob Storage                   |
+| DNS            | Cloud DNS                      | Azure DNS                      |
+| SSL / Secrets  | Secret Manager                 | Key Vault                      |
 
 ---
 
@@ -118,11 +120,11 @@ terraform {
 }
 ```
 
-| Provider | Backend | Lock Table |
-|----------|---------|------------|
-| AWS | S3 | DynamoDB |
-| GCP | GCS | (built-in lock) |
-| Azure | Blob Storage | (lease-based lock) |
+| Provider | Backend      | Lock Table         |
+| -------- | ------------ | ------------------ |
+| AWS      | S3           | DynamoDB           |
+| GCP      | GCS          | (built-in lock)    |
+| Azure    | Blob Storage | (lease-based lock) |
 
 ### Rules
 
@@ -331,6 +333,7 @@ terraform-<provider>-<resource>
 ```
 
 Examples:
+
 - `terraform-aws-vpc` — networking
 - `terraform-aws-rds-postgresql` — managed PostgreSQL
 - `terraform-aws-eks` — Kubernetes cluster
@@ -672,11 +675,11 @@ resource "aws_route53_record" "cert_validation" {
 
 ### Environment Mapping
 
-| Environment | Purpose | Resource Sizing | Multi-AZ | Backups | SSL |
-|-------------|---------|-----------------|----------|---------|-----|
-| **dev** | Local dev / feature branches | Small (t4g.small, t3.small) | No | 7 days | No |
-| **staging** | Pre-release QA | Medium (t4g.medium, t3.medium) | Optional | 14 days | Optional |
-| **prod** | Live production | Large (t4g.large, t3.large) | Yes | 30 days | Yes |
+| Environment | Purpose                      | Resource Sizing                | Multi-AZ | Backups | SSL      |
+| ----------- | ---------------------------- | ------------------------------ | -------- | ------- | -------- |
+| **dev**     | Local dev / feature branches | Small (t4g.small, t3.small)    | No       | 7 days  | No       |
+| **staging** | Pre-release QA               | Medium (t4g.medium, t3.medium) | Optional | 14 days | Optional |
+| **prod**    | Live production              | Large (t4g.large, t3.large)    | Yes      | 30 days | Yes      |
 
 ### Applying Terraform
 
@@ -702,15 +705,15 @@ terraform destroy -var-file="terraform.tfvars"
 
 ## Security
 
-| Rule | Measure |
-|------|---------|
-| Secrets | Store in Secrets Manager / SSM Parameter Store, never in `terraform.tfvars` |
-| State | Remote backend with encryption at rest + state locking |
-| Database | `storage_encrypted = true`, no public accessibility |
-| S3 | Block public access, SSE enabled, versioning enabled |
-| Network | Private subnets for databases, NAT gateways for egress |
-| IAM | Least-privilege service accounts per environment |
-| Audit | Enable CloudTrail / Audit Logs for all API calls |
+| Rule     | Measure                                                                     |
+| -------- | --------------------------------------------------------------------------- |
+| Secrets  | Store in Secrets Manager / SSM Parameter Store, never in `terraform.tfvars` |
+| State    | Remote backend with encryption at rest + state locking                      |
+| Database | `storage_encrypted = true`, no public accessibility                         |
+| S3       | Block public access, SSE enabled, versioning enabled                        |
+| Network  | Private subnets for databases, NAT gateways for egress                      |
+| IAM      | Least-privilege service accounts per environment                            |
+| Audit    | Enable CloudTrail / Audit Logs for all API calls                            |
 
 ---
 
@@ -738,7 +741,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.9"
+          terraform_version: '1.9'
 
       - name: Terraform Format
         run: terraform fmt -check -recursive infra/terraform/

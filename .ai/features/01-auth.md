@@ -1,5 +1,7 @@
 # 01 — 身份认证
 
+> **所属服务:** identity-service（Spring Boot）。此服务承载身份认证、成员管理、设备注册、权限控制等核心数据域。Auth 是其中的一个子域 — 其他子域见 [02-members](./02-members.md)、[07-device-registry](./07-device-registry.md)。identity-service 当前包含 `AuthController`、`MemberController`、`DeviceController`、`PermissionController`。
+
 ## 依赖
 
 无。这是第一个 feature，所有其他 feature 都依赖它。
@@ -14,7 +16,7 @@
 
 ## 数据模型
 
-**服务**: Spring Boot (identity-service)
+**服务**: identity-service (Spring Boot + MyBatis-Plus + Flyway + Spring Security)
 
 **表**: `users` (已存在，MyBatis-Plus 管理)
 

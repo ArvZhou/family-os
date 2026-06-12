@@ -8,7 +8,7 @@ This document defines general deployment standards. Specific build and deploy de
 - [Nuxt.js Standards](./standards/frontend/nuxtjs.md) — Docker + Helm for Nuxt.js
 - [NestJS Standards](./standards/backend/nestjs.md) — NestJS deployment conventions
 - [Spring Boot Standards](./standards/backend/spring-boot.md) — Spring Boot deployment conventions
-- [Terraform Standards](./standards/infra/terraform.md) — Cloud infrastructure as code (IaC)
+- [Terraform Standards](./standards/infra/terraform.md) — Cloud infrastructure as code (IaC) — **future: no `infra/terraform/` directory yet**
 
 ---
 
@@ -16,11 +16,11 @@ This document defines general deployment standards. Specific build and deploy de
 
 Support three deployment environments:
 
-| Environment | Purpose | Characteristics |
-|-------------|---------|-----------------|
-| **Development** | Local dev, feature branches | Local infrastructure, hot reload |
-| **Staging** | Pre-release QA, integration testing | Production-like config, test data |
-| **Production** | Live user-facing environment | Real data, high availability |
+| Environment     | Purpose                             | Characteristics                   |
+| --------------- | ----------------------------------- | --------------------------------- |
+| **Development** | Local dev, feature branches         | Local infrastructure, hot reload  |
+| **Staging**     | Pre-release QA, integration testing | Production-like config, test data |
+| **Production**  | Live user-facing environment        | Real data, high availability      |
 
 Each service reads its environment config from env-specific files. Never hardcode environment-specific values in source code.
 
@@ -128,7 +128,7 @@ services:
   postgres:
     image: postgres:16-alpine
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -139,19 +139,19 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
 
   mqtt:
     image: emqx/emqx:latest
     ports:
-      - "1883:1883"
-      - "18083:18083"
+      - '1883:1883'
+      - '18083:18083'
 
   minio:
     image: minio/minio:latest
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - '9000:9000'
+      - '9001:9001'
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY}

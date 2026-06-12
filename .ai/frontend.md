@@ -33,7 +33,7 @@ interface HealthCardProps {
   title: string;
   value: number;
   unit: string;
-  trend?: "up" | "down" | "stable";
+  trend?: 'up' | 'down' | 'stable';
   children?: React.ReactNode;
 }
 
@@ -54,16 +54,16 @@ export function HealthCard({ title, value, unit, trend, children }: HealthCardPr
 
 ### File Naming
 
-| Type | Convention | Example |
-|------|-----------|---------|
-| Components | `PascalCase.tsx` / `PascalCase.vue` | `HealthCard.tsx` |
-| Hooks / Composables | `use<Name>.ts` | `useHealthData.ts` |
-| Stores | `<name>.store.ts` | `auth.store.ts` |
-| Utilities | `kebab-case.ts` | `format-date.ts` |
-| Server Actions | `actions.ts` (per feature) | `features/health/actions.ts` |
-| Types | `<name>.types.ts` | `health.types.ts` |
-| GraphQL queries | `<name>.queries.ts` / `<name>.graphql` | `member.queries.ts` |
-| GraphQL mutations | `<name>.mutations.ts` / `<name>.graphql` | `member.mutations.ts` |
+| Type                | Convention                               | Example                      |
+| ------------------- | ---------------------------------------- | ---------------------------- |
+| Components          | `PascalCase.tsx` / `PascalCase.vue`      | `HealthCard.tsx`             |
+| Hooks / Composables | `use<Name>.ts`                           | `useHealthData.ts`           |
+| Stores              | `<name>.store.ts`                        | `auth.store.ts`              |
+| Utilities           | `kebab-case.ts`                          | `format-date.ts`             |
+| Server Actions      | `actions.ts` (per feature)               | `features/health/actions.ts` |
+| Types               | `<name>.types.ts`                        | `health.types.ts`            |
+| GraphQL queries     | `<name>.queries.ts` / `<name>.graphql`   | `member.queries.ts`          |
+| GraphQL mutations   | `<name>.mutations.ts` / `<name>.graphql` | `member.mutations.ts`        |
 
 ---
 
@@ -78,26 +78,41 @@ export function HealthCard({ title, value, unit, trend, children }: HealthCardPr
 
 ### GraphQL Client Setup
 
-| Framework | Recommended Client |
-|-----------|-------------------|
-| React / Next.js | Apollo Client (`@apollo/client`) or urql |
-| Vue / Nuxt.js | `@vue/apollo-composable` or `nuxt-graphql-client` |
+| Framework       | Recommended Client                                |
+| --------------- | ------------------------------------------------- |
+| React / Next.js | Apollo Client (`@apollo/client`) or urql          |
+| Vue / Nuxt.js   | `@vue/apollo-composable` or `nuxt-graphql-client` |
 
 ### Code Generation
 
 Use `graphql-codegen` to generate TypeScript types from the backend schema:
 
-```yaml
-# codegen.ts
-schema: 'http://localhost:4000/graphql'   # or path to schema.graphql
-documents: 'src/**/*.graphql'
-generates:
-  src/generated/graphql.ts:
-    plugins:
-      - typescript
-      - typescript-operations
-      - typescript-react-apollo        # or typescript-vue-apollo
+```ts
+// codegen.ts — 本仓库实际使用环境变量优先，回退到本地开发地址
+import type { CodegenConfig } from '@graphql-codegen/cli';
+
+const config: CodegenConfig = {
+  schema: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql',
+  documents: 'src/graphql/**/*.ts',
+  generates: {
+    'src/generated/graphql.ts': {
+      plugins: ['typescript', 'typescript-operations', 'typescript-react-apollo'],
+      config: {
+        withHooks: true,
+        strictScalars: true,
+        scalars: {
+          DateTime: 'string',
+          Date: 'string',
+        },
+      },
+    },
+  },
+};
+
+export default config;
 ```
+
+> **Note:** This example matches the actual `apps/family-portal/codegen.ts`. The schema URL uses `NEXT_PUBLIC_GRAPHQL_URL` environment variable with a localhost fallback — not a hardcoded URL.
 
 ### Query Organization
 
@@ -177,7 +192,7 @@ function MemberList() {
 
   return (
     <ul>
-      {data?.members.map(member => (
+      {data?.members.map((member) => (
         <li key={member.id}>{member.name}</li>
       ))}
     </ul>
@@ -205,11 +220,11 @@ export const GET_MEMBERS = gql`
 
 ```vue
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
-import { GET_MEMBERS } from '@/graphql/queries/member.queries'
+import { useQuery } from '@vue/apollo-composable';
+import { GET_MEMBERS } from '@/graphql/queries/member.queries';
 
-const { result, loading, error } = useQuery(GET_MEMBERS)
-const members = computed(() => result.value?.members ?? [])
+const { result, loading, error } = useQuery(GET_MEMBERS);
+const members = computed(() => result.value?.members ?? []);
 </script>
 ```
 
@@ -225,12 +240,12 @@ const members = computed(() => result.value?.members ?? [])
 
 ### Rule: Server State ≠ Client State
 
-| Category | What goes there | Example |
-|----------|-----------------|---------|
-| **Server state** | GraphQL query results (cached by client) | Apollo cache, urql cache |
-| **Client state** | UI state — sidebar, theme, auth token | Zustand, Pinia |
-| **Form state** | Ephemeral form inputs, validation | Form libraries, native state |
-| **URL state** | Page, filters, sort order | Router params + searchParams |
+| Category         | What goes there                          | Example                      |
+| ---------------- | ---------------------------------------- | ---------------------------- |
+| **Server state** | GraphQL query results (cached by client) | Apollo cache, urql cache     |
+| **Client state** | UI state — sidebar, theme, auth token    | Zustand, Pinia               |
+| **Form state**   | Ephemeral form inputs, validation        | Form libraries, native state |
+| **URL state**    | Page, filters, sort order                | Router params + searchParams |
 
 ### Principles
 
@@ -311,15 +326,17 @@ const members = computed(() => result.value?.members ?? [])
 // ✅ Mock GraphQL query in test
 import { MockedProvider } from '@apollo/client/testing';
 
-const mocks = [{
-  request: { query: GET_MEMBERS },
-  result: { data: { members: [{ id: '1', name: 'Alice' }] } },
-}];
+const mocks = [
+  {
+    request: { query: GET_MEMBERS },
+    result: { data: { members: [{ id: '1', name: 'Alice' }] } },
+  },
+];
 
 render(
   <MockedProvider mocks={mocks}>
     <MemberList />
-  </MockedProvider>
+  </MockedProvider>,
 );
 ```
 
@@ -329,20 +346,20 @@ render(
 
 ### Tools
 
-| Tool | Purpose |
-|------|---------|
-| Husky | Git hook runner |
-| lint-staged | Run linters on staged files |
-| commitlint | Enforce Conventional Commits |
-| truffleHog / detect-secrets | Scan for credentials |
+| Tool                        | Purpose                      |
+| --------------------------- | ---------------------------- |
+| Husky                       | Git hook runner              |
+| lint-staged                 | Run linters on staged files  |
+| commitlint                  | Enforce Conventional Commits |
+| truffleHog / detect-secrets | Scan for credentials         |
 
 ### Hooks
 
-| Hook | Action |
-|------|--------|
-| `pre-commit` | ESLint + Prettier on staged files |
-| `commit-msg` | Conventional Commits validation |
-| `pre-push` | Full test suite + sensitive-data scan |
+| Hook         | Action                                |
+| ------------ | ------------------------------------- |
+| `pre-commit` | ESLint + Prettier on staged files     |
+| `commit-msg` | Conventional Commits validation       |
+| `pre-push`   | Full test suite + sensitive-data scan |
 
 ---
 
@@ -350,11 +367,11 @@ render(
 
 ### Multi-Environment Setup
 
-| Environment | Purpose |
-|-------------|---------|
-| Development | Local dev, feature branches |
-| Staging | Pre-release QA, integration testing |
-| Production | Live user-facing environment |
+| Environment | Purpose                             |
+| ----------- | ----------------------------------- |
+| Development | Local dev, feature branches         |
+| Staging     | Pre-release QA, integration testing |
+| Production  | Live user-facing environment        |
 
 ### Principles
 

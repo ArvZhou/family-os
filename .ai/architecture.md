@@ -41,11 +41,11 @@ PostgreSQL / GraphQL Subscription
 ## Repository Structure (Monorepo)
 
 ```text
-project/
+family-os/
 ├── apps/                    # Runnable applications
-│   ├── web/                 # Frontend application
-│   ├── api-nest/            # NestJS — GraphQL gateway + BFF
-│   └── api-spring/          # Spring Boot — identity & core data
+│   ├── family-portal/       # Next.js frontend (SSR + App Router)
+│   ├── family-service/      # NestJS — GraphQL gateway + BFF
+│   └── identity-service/    # Spring Boot — identity & core data
 ├── packages/                # Reusable shared code
 │   ├── shared-types/        # TypeScript type definitions
 │   ├── graphql-schema/      # Shared GraphQL schema & codegen types
@@ -55,16 +55,17 @@ project/
 ├── infra/                   # Infrastructure as code
 │   ├── docker/              # Docker Compose + Dockerfiles
 │   ├── k8s/                 # Kubernetes / Helm charts
-│   ├── terraform/           # Cloud infrastructure (IaC)
 │   ├── nginx/               # Reverse proxy config
 │   ├── mqtt/                # MQTT broker config
 │   └── database/            # Database migration scripts (Flyway)
 ├── docs/                    # Project documentation
 ├── tools/                   # Dev utilities
 ├── package.json
-├── workspace.yaml
+├── pnpm-workspace.yaml
 └── README.md
 ```
+
+> **Note:** This reflects the current repository structure. There is no `infra/terraform/` directory yet — cloud infrastructure as code (IaC) is a future addition.
 
 ---
 
@@ -128,7 +129,7 @@ Responsibilities:
 - **REST API**: documented via SpringDoc OpenAPI / Swagger
 - **Database ownership**: sole owner of PostgreSQL identity/core tables
 
-Spring Boot owns the data — other services communicate via REST API.
+**Current stack:** MyBatis-Plus (ORM), Flyway (migrations), Spring Security (auth). The identity-service currently contains controllers for `Auth`, `Member`, `Device`, and `Permission` — it is not a pure auth service but the identity and core data service.
 
 ---
 
@@ -168,7 +169,9 @@ Kubernetes Helm charts for staging and production deployment.
 
 ### `nginx`
 
-Reverse proxy — routes `/graphql` to NestJS, `/api/` to NestJS REST, `/auth/` to Spring Boot.
+Reverse proxy — intended routing: `/graphql` → NestJS, `/api/` → NestJS REST, `/auth/` → Spring Boot.
+
+> **Note:** Verify the actual Nginx configuration in `infra/nginx/` before referencing these routes. The routing described here is the target architecture and may not yet be fully implemented.
 
 ### `mqtt`
 

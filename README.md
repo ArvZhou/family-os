@@ -28,16 +28,18 @@ A digital management platform for household scenarios.
 ## Tech Stack
 
 ```
-Frontend (Next.js / Nuxt.js)
+Frontend (Next.js)
   ↓ (GraphQL)
-NestJS — GraphQL Gateway + Business Layer + IoT + AI
+NestJS (family-service) — GraphQL Gateway + Business Layer + IoT + AI
   ↓ (REST, internal)
-Spring Boot — Identity & Core Data Layer (SSO / OAuth2)
+Spring Boot (identity-service) — Identity & Core Data Layer (SSO / OAuth2)
   ↓
 PostgreSQL
 
 Device → MQTT Broker (EMQX) → NestJS
 ```
+
+> **Note:** The frontend currently supports only Next.js. The NestJS gateway and Spring Boot identity service are implemented as `apps/family-service` and `apps/identity-service` respectively.
 
 ### API Layer
 
@@ -48,18 +50,20 @@ Device → MQTT Broker (EMQX) → NestJS
 
 ### Frontend
 
-- **Framework:** Next.js 15+ or Nuxt 3+ (see [standards](.ai/standards/frontend/))
-- **API Client:** Apollo Client (React) / vue-apollo (Vue)
-- **Styling:** Tailwind CSS + component library (shadcn/ui or Nuxt UI)
-- **State:** GraphQL client cache (server) + Zustand/Pinia (client)
-- **i18n:** next-intl (Next.js) / @nuxtjs/i18n (Nuxt.js)
+- **Framework:** Next.js 15+ (see [standards](.ai/standards/frontend/nextjs.md))
+- **API Client:** Apollo Client (React)
+- **Styling:** Tailwind CSS + shadcn/ui
+- **State:** GraphQL client cache (server) + Zustand (client)
+- **i18n:** next-intl
 - **Testing:** Vitest
 - **Linting:** ESLint + Prettier (pre-commit via Husky + lint-staged)
+
+> **Note:** Nuxt.js / Vue support is documented in [standards](.ai/standards/frontend/nuxtjs.md) as a future option but is not currently implemented in this repository.
 
 ### Backend
 
 - **GraphQL Gateway:** NestJS (`@nestjs/graphql`, code-first)
-- **Core Data:** Spring Boot (JPA, Flyway, SpringDoc OpenAPI)
+- **Core Data:** Spring Boot (MyBatis-Plus, Flyway, SpringDoc OpenAPI)
 - **Database:** PostgreSQL (UUID primary keys, snake_case)
 
 ### Infrastructure
@@ -75,11 +79,12 @@ Device → MQTT Broker (EMQX) → NestJS
 ```
 family-os/
 ├── apps/                         # Runnable applications
-│   ├── web/                      # Next.js frontend (SSR + App Router)
-│   ├── api-spring/               # Spring Boot — identity & core data
-│   └── api-nest/                 # NestJS — business, IoT, AI
+│   ├── family-portal/            # Next.js frontend (SSR + App Router)
+│   ├── family-service/           # NestJS — business, IoT, AI
+│   └── identity-service/         # Spring Boot — identity & core data
 ├── packages/                     # Shared code
 │   ├── shared-types/             # TypeScript type definitions
+│   ├── graphql-schema/           # Shared GraphQL schema & codegen types
 │   ├── ui/                       # Shared React components
 │   ├── utils/                    # Shared utility functions
 │   └── config/                   # ESLint, Prettier, TS configs
@@ -149,21 +154,34 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Framework-Specific Standards (`standards/`)
 
-| Document                                                      | Description                                                        |
-| ------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [Next.js Standards](.ai/standards/frontend/nextjs.md)         | Apollo Client, codegen, App Router, next-intl, SSO, Docker, Helm   |
-| [Nuxt.js Standards](.ai/standards/frontend/nuxtjs.md)         | vue-apollo, codegen, auto-imports, @nuxtjs/i18n, SSO, Nitro builds |
-| [NestJS Standards](.ai/standards/backend/nestjs.md)           | GraphQL resolvers, Swagger, DataLoaders, SSO guard, MQTT           |
-| [Spring Boot Standards](.ai/standards/backend/spring-boot.md) | SpringDoc OpenAPI, Spring Security, OAuth2/OIDC, Flyway, testing   |
-| [Terraform Standards](.ai/standards/infra/terraform.md)       | Cloud infrastructure as code — VPC, DB, K8s, Redis, DNS, SSL       |
+| Document                                                      | Description                                                                                        |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [Next.js Standards](.ai/standards/frontend/nextjs.md)         | Apollo Client, codegen, App Router, next-intl, SSO, Docker, Helm                                   |
+| [Nuxt.js Standards](.ai/standards/frontend/nuxtjs.md)         | vue-apollo, codegen, auto-imports, @nuxtjs/i18n, SSO, Nitro builds                                 |
+| [NestJS Standards](.ai/standards/backend/nestjs.md)           | GraphQL resolvers, Swagger, DataLoaders, SSO guard, MQTT                                           |
+| [Spring Boot Standards](.ai/standards/backend/spring-boot.md) | SpringDoc OpenAPI, Spring Security, OAuth2/OIDC, Flyway, testing                                   |
+| [Terraform Standards](.ai/standards/infra/terraform.md)       | Cloud infrastructure as code — VPC, DB, K8s, Redis, DNS, SSL _(future; no `infra/terraform/` yet)_ |
 
 ### Feature Specs (`features/`)
 
-| Document                                       | Description                                         |
-| ---------------------------------------------- | --------------------------------------------------- |
-| [API Endpoints & GraphQL](.ai/features/api.md) | REST endpoints + GraphQL query/mutation definitions |
-| [MQTT Design](.ai/features/mqtt.md)            | Topics, message format, authentication              |
-| [AI Service](.ai/features/ai-service.md)       | LLM integration, prompt design, caching             |
+Feature specs are ordered by implementation dependency (01–14). The first four (auth, members, GraphQL gateway, frontend shell) are implemented; the remaining are in planning or early development.
+
+| #   | Document                                                | Service          | Description                        |
+| --- | ------------------------------------------------------- | ---------------- | ---------------------------------- |
+| 01  | [Auth](.ai/features/01-auth.md)                         | identity-service | Registration, login, JWT           |
+| 02  | [Members](.ai/features/02-members.md)                   | identity-service | Family member profiles             |
+| 03  | [GraphQL Gateway](.ai/features/03-graphql-gateway.md)   | family-service   | GraphQL API + Spring Boot proxy    |
+| 04  | [Frontend Shell](.ai/features/04-frontend-shell.md)     | family-portal    | Login page, layout, member list    |
+| 05  | [Health Records](.ai/features/05-health-records.md)     | family-service   | Health metrics, trends _(planned)_ |
+| 06  | [Goals](.ai/features/06-goals.md)                       | family-service   | Goal setting, progress _(planned)_ |
+| 07  | [Device Registry](.ai/features/07-device-registry.md)   | identity-service | Device registration, status        |
+| 08  | [MQTT Integration](.ai/features/08-mqtt-integration.md) | family-service   | IoT device communication           |
+| 09  | [Device Control](.ai/features/09-device-control.md)     | family-service   | Device commands + subscriptions    |
+| 10  | [AI Services](.ai/features/10-ai-services.md)           | family-service   | LLM analysis, recommendations      |
+| 11  | [Automation](.ai/features/11-automation.md)             | family-service   | Rule-based triggers                |
+| 12  | [Notifications](.ai/features/12-notifications.md)       | family-service   | Multi-channel alerts               |
+| 13  | [Archive](.ai/features/13-archive.md)                   | family-service   | Photo/document storage             |
+| 14  | [SSO](.ai/features/14-sso.md)                           | identity-service | OAuth2/OIDC single sign-on         |
 
 Chinese versions available in `.ai/zh/` (`*.zh.md`).
 

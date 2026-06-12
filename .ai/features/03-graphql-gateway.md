@@ -25,6 +25,8 @@ NestJS 作为 BFF（Backend for Frontend），负责：
 2. 通过 HTTP 调用 Spring Boot REST，聚合数据
 3. 认证转发 — 前端传 JWT，NestJS 原样带给 Spring Boot
 
+**当前实现状态：** `auth` 和 `member` 模块已实现（GraphQL 代理到 identity-service）。以下模块目录已创建但处于早期开发或规划阶段：`health`、`goal`、`device`、`automation`、`archive`、`notification`、`ai`。本文档描述的是目标架构，当前以 `auth`/`member` 的实际实现为准。
+
 ## GraphQL Schema
 
 ### Auth
@@ -125,22 +127,31 @@ scalar DateTime # ISO datetime string
 
 ## 模块结构
 
+当前 `apps/family-service/src/modules/` 下的实际目录：
+
 ```
 apps/family-service/src/modules/
-├── auth/
-│   ├── auth.resolver.ts      # login, refreshToken mutations
-│   ├── auth.service.ts       # HTTP → Spring Boot /api/v1/auth/*
-│   ├── models/
-│   │   ├── auth.model.ts     # AuthPayload, LoginInput, RefreshTokenInput
-│   │   └── user.model.ts     # User ObjectType
-│   └── auth.module.ts
-├── member/
-│   ├── member.resolver.ts    # members, member queries + CRUD mutations
-│   ├── member.service.ts     # HTTP → Spring Boot /api/v1/members/*
-│   ├── models/
-│   │   └── member.model.ts   # Member, Relation enum, CreateMemberInput, UpdateMemberInput
-│   └── member.module.ts
-└── common/                   # (后续 DataLoader, guards 放这里)
+├── auth/          # ✅ 已实现 — login, refreshToken (GraphQL → identity-service)
+├── member/        # ✅ 已实现 — members CRUD (GraphQL → identity-service)
+├── health/        # 规划中
+├── goal/          # 规划中
+├── device/        # 规划中
+├── automation/    # 规划中
+├── archive/       # 规划中
+├── notification/  # 规划中
+└── ai/            # 规划中
+```
+
+已实现模块的典型内部结构（以 auth 为例）：
+
+```
+auth/
+├── auth.resolver.ts      # login, refreshToken mutations
+├── auth.service.ts       # HTTP → Spring Boot /api/v1/auth/*
+├── models/
+│   ├── auth.model.ts     # AuthPayload, LoginInput, RefreshTokenInput
+│   └── user.model.ts     # User ObjectType
+└── auth.module.ts
 ```
 
 ## 验收标准
