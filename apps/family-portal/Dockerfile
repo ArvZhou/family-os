@@ -8,7 +8,7 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/family-portal/package.json apps/family-portal/
 COPY packages/ packages/
-RUN HUSKY=0 pnpm install --frozen-lockfile --filter @family-os/family-portal
+RUN pnpm install --frozen-lockfile --filter @family-os/family-portal --ignore-scripts
 
 # Stage 2: Build
 COPY apps/family-portal apps/family-portal
