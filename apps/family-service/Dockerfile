@@ -8,11 +8,11 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/family-service/package.json apps/family-service/
 COPY packages/ packages/
-RUN pnpm install --frozen-lockfile --filter @family-os/family-service --prod
+RUN HUSKY=0 pnpm install --frozen-lockfile --filter @family-os/family-service --prod
 
 # Stage 2: Build
 COPY apps/family-service apps/family-service
-RUN pnpm --filter @family-os/family-service build
+RUN HUSKY=0 pnpm --filter @family-os/family-service build
 
 # Stage 3: Production runtime
 FROM node:22-alpine AS runner
