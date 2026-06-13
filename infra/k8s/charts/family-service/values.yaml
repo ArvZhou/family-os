@@ -1,19 +1,21 @@
 replicaCount: 1
 
 image:
-  repository: registry.familyos.dev/family-service
+  repository: ghcr.io/arvzhou/family-os/family-service
   tag: latest
   pullPolicy: IfNotPresent
 
 service:
   type: ClusterIP
   port: 80
+  containerPort: 4000
 
 ingress:
-  enabled: false
-  host: localhost
+  enabled: true
+  host: api.familyos.local
   tls: false
   tlsSecretName: ""
+  path: /graphql
 
 resources:
   limits:
@@ -23,5 +25,18 @@ resources:
     memory: 256Mi
     cpu: 250m
 
-env: {}
+env:
+  PORT: "4000"
+  NODE_ENV: production
+  DB_HOST: postgres.family-os.svc.cluster.local
+  DB_PORT: "5432"
+  DB_NAME: family_os
+  DB_USER: family_user
+  DB_PASSWORD: Zxg199095
+  CACHE_HOST: redis.family-os.svc.cluster.local
+  CACHE_PORT: "6379"
+  BROKER_URL: mqtt://mqtt.family-os.svc.cluster.local:1883
+  JWT_SECRET: dev-secret-key-at-least-256-bits-long-for-hs256-algo
+  JWT_REFRESH_SECRET: dev-refresh-secret-key-at-least-256-bits-long
+  SPRING_API_BASE_URL: http://identity-service-identity-service.family-os.svc.cluster.local/api/v1
 # Environment-specific values override in values-dev.yaml / values-prod.yaml

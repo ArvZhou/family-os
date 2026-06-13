@@ -1,17 +1,18 @@
 replicaCount: 1
 
 image:
-  repository: registry.familyos.dev/identity-service
+  repository: ghcr.io/arvzhou/family-os/identity-service
   tag: latest
   pullPolicy: IfNotPresent
 
 service:
   type: ClusterIP
   port: 80
+  containerPort: 8080
 
 ingress:
-  enabled: false
-  host: localhost
+  enabled: true
+  host: api.familyos.local
   tls: false
   tlsSecretName: ""
 
@@ -23,5 +24,17 @@ resources:
     memory: 256Mi
     cpu: 250m
 
-env: {}
+env:
+  DB_HOST: postgres.family-os.svc.cluster.local
+  DB_PORT: "5432"
+  DB_NAME: family_os
+  DB_USER: family_user
+  DB_PASSWORD: Zxg199095
+  JWT_SECRET: dev-secret-key-at-least-256-bits-long-for-hs256-algo
+  JWT_REFRESH_SECRET: dev-refresh-secret-key-at-least-256-bits-long
+  MAIL_HOST: smtp.qq.com
+  MAIL_PORT: "587"
+  MAIL_USERNAME: ar.zhou@qq.com
+  MAIL_PASSWORD: hbjvxrgqaawlbgdf
+  SPRING_PROFILES_ACTIVE: prod
 # Environment-specific values override in values-dev.yaml / values-prod.yaml

@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "aws-api": {
+      "command": "/home/arvin/.local/bin/uvx",
+      "args": ["awslabs.aws-api-mcp-server@latest"],
+      "env": {
+        "AWS_REGION": "ap-southeast-1",
+        "AWS_PROFILE": "default",
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      }
+    },
+    "aws-knowledge": {
+      "command": "/home/arvin/.local/bin/uvx",
+      "args": ["awslabs.aws-knowledge-mcp-server@latest"],
+      "env": {
+        "AWS_REGION": "ap-southeast-1",
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      }
+    },
+    "tencentcloud": {
+      "command": "npx",
+      "args": ["-y", "@tencentcloud/sdk-mcp@latest"],
+      "env": {
+        "TENCENTCLOUD_SECRET_ID": "${TENCENTCLOUD_SECRET_ID}",
+        "TENCENTCLOUD_SECRET_KEY": "${TENCENTCLOUD_SECRET_KEY}"
+      }
+    }
+  }
+}
