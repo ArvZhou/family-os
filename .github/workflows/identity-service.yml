@@ -85,6 +85,8 @@ jobs:
         uses: azure/setup-helm@v4
 
       - name: Deploy
+        env:
+          KUBECONFIG: /home/runner/.kube/config
         run: |
           TAG="${{ inputs.tag || github.sha }}"
           helm upgrade --install identity-service infra/k8s/charts/identity-service \
