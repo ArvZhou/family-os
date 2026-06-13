@@ -4,7 +4,7 @@ FROM node:22-alpine AS base
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
-# Stage 1: Install dependencies
+# Stage 1: Install ALL dependencies (for build)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/family-portal/package.json apps/family-portal/
 COPY packages/ packages/
@@ -12,9 +12,12 @@ RUN pnpm install --frozen-lockfile --filter @family-os/family-portal --ignore-sc
 
 # Stage 2: Build
 COPY apps/family-portal apps/family-portal
-RUN HUSKY=0 pnpm --filter @family-os/family-portal build
+RUN pnpm --filter @family-os/family-portal build
 
-# Stage 3: Production runtime
+# Stage 3: Production deps only
+RUN pnpm install --frozen-lockfile --filter @family-os/family-portal --prod --ignore-scripts
+
+# Stage 4: Runner
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
