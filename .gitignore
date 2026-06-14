@@ -66,3 +66,4 @@ gradle-*/
 .claude/worktrees/
 .claude/scheduled_tasks.json
 .claude/settings.local.json
+k3s-kubeconfig.yaml
