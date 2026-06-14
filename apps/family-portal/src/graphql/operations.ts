@@ -195,3 +195,101 @@ export const CREATE_HEALTH_RECORD = gql`
     }
   }
 `;
+
+export const GET_GOALS = gql`
+  query GetGoals($memberId: ID, $type: GoalType, $status: GoalStatus, $first: Int, $after: String) {
+    goals(memberId: $memberId, type: $type, status: $status, first: $first, after: $after) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      edges {
+        cursor
+        node {
+          id
+          memberId
+          title
+          type
+          targetValue
+          currentValue
+          unit
+          startDate
+          endDate
+          status
+          progress
+          createdAt
+          updatedAt
+        }
+      }
+    }
+  }
+`;
+
+export const GET_GOAL = gql`
+  query GetGoal($id: ID!) {
+    goal(id: $id) {
+      id
+      memberId
+      title
+      type
+      targetValue
+      currentValue
+      unit
+      startDate
+      endDate
+      status
+      progress
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const CREATE_GOAL = gql`
+  mutation CreateGoal($input: CreateGoalInput!) {
+    createGoal(input: $input) {
+      id
+      memberId
+      title
+      type
+      targetValue
+      currentValue
+      unit
+      startDate
+      endDate
+      status
+      progress
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const UPDATE_GOAL_PROGRESS = gql`
+  mutation UpdateGoalProgress($id: ID!, $input: UpdateGoalProgressInput!) {
+    updateGoalProgress(id: $id, input: $input) {
+      id
+      memberId
+      title
+      type
+      targetValue
+      currentValue
+      unit
+      startDate
+      endDate
+      status
+      progress
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const DELETE_GOAL = gql`
+  mutation DeleteGoal($id: ID!) {
+    deleteGoal(id: $id)
+  }
+`;
