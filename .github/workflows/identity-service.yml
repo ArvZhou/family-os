@@ -76,22 +76,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup kubeconfig
+      - name: Setup SSH
         run: |
-          mkdir -p ~/.kube
-          printf '%s' "${{ secrets.K3S_KUBECONFIG }}" > ~/.kube/config
-          chmod 600 ~/.kube/config
+          mkdir -p ~/.ssh
+          echo "${{ secrets.K3S_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.K3S_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Install Helm
-        uses: azure/setup-helm@v4
-
-      - name: Deploy
+      - name: Deploy via SSH
         env:
-          KUBECONFIG: /home/runner/.kube/config
+          SSH_HOST: ${{ secrets.K3S_HOST }}
+          SSH_USER: ${{ secrets.K3S_SSH_USER }}
         run: |
           TAG="${{ inputs.tag || github.sha }}"
-          helm upgrade --install identity-service infra/k8s/charts/identity-service \
-            --namespace family-os --create-namespace \
-            --set image.tag="${TAG}" \
-            --values infra/k8s/charts/identity-service/values.yaml
-          kubectl rollout status deployment/identity-service-identity-service -n family-os --timeout=120s || true
+          RELEASE="identity-service"
+          DEPLOYMENT="identity-service-identity-service"
+
+          scp -r "infra/k8s/charts/${RELEASE}" "${SSH_USER}@${SSH_HOST}:/tmp/${RELEASE}-chart"
+
+          ssh "${SSH_USER}@${SSH_HOST}" bash -s -- "${TAG}" "${RELEASE}" "${DEPLOYMENT}" << 'REMOTE_SCRIPT'
+            TAG=$1
+            RELEASE=$2
+            DEPLOYMENT=$3
+            export KUBECONFIG=~/.kube/config
+            helm upgrade --install "${RELEASE}" "/tmp/${RELEASE}-chart" \
+              --namespace family-os --create-namespace \
+              --set image.tag="${TAG}" \
+              --values "/tmp/${RELEASE}-chart/values.yaml"
+            kubectl rollout status "deployment/${DEPLOYMENT}" -n family-os --timeout=120s || true
+            rm -rf "/tmp/${RELEASE}-chart"
+          REMOTE_SCRIPT
